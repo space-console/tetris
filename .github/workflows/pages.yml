@@ -1,0 +1,132 @@
+name: Pages
+
+# Static-app deploy pipeline (shared verbatim with game-controller).
+#
+#   push to main            -> build + lint + stamp -> deploy to gh-pages ROOT
+#                              (preview/ subfolders preserved)
+#   push to a feature branch-> build + lint + stamp -> deploy to
+#                              gh-pages preview/<slug>-<hash>/
+#   pull_request open/sync  -> build + lint (the required status checks) +
+#                              comment the preview URL
+#   pull_request closed     -> remove that branch's preview folder, and if the
+#                              PR was merged, delete the feature branch
+#
+# Pages must be set to "Deploy from branch: gh-pages /(root)" — see the wiki
+# docs/todo.md for the one-time repo settings.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write        # push to gh-pages, delete merged branches
+  pull-requests: write   # comment the preview URL
+
+concurrency:
+  group: pages-${{ github.workflow }}-${{ github.ref }}
+  # Supersede in-progress feature-branch builds, but NEVER cancel a production
+  # (main) deploy — cancelling it leaves the site root un-deployed.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build:
+    # Everything except PR-close (handled by the cleanup job).
+    if: github.event_name == 'push' || github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # The repo intentionally does not commit package-lock.json (dev-tooling
+      # deps only, zero-build ethos), so use `npm install`, not `npm ci`.
+      - run: npm install --no-audit --no-fund
+
+      # The full pipeline: lint, then build the stamped _dist/ (cache-busted).
+      - run: npm run lint
+      - run: npm run build
+
+      - name: Resolve deploy target
+        id: target
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "is_root=true" >> "$GITHUB_OUTPUT"
+          else
+            slug=$(echo "$BRANCH" | tr 'A-Z' 'a-z' | sed 's#[^a-z0-9]#-#g; s#^-*##; s#-*$##')
+            hash=$(printf '%s' "$BRANCH" | sha1sum | cut -c1-4)
+            echo "is_root=false" >> "$GITHUB_OUTPUT"
+            echo "dir=${slug}-${hash}" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ---- Deploy (push events only; PRs just run the checks above) ----------
+      - name: Deploy to root (main)
+        if: github.event_name == 'push' && steps.target.outputs.is_root == 'true'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: _dist
+          clean: true
+          clean-exclude: |
+            preview
+            preview/**
+
+      - name: Deploy preview (feature branch)
+        if: github.event_name == 'push' && steps.target.outputs.is_root == 'false'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: _dist
+          target-folder: preview/${{ steps.target.outputs.dir }}
+          clean: true
+
+      # ---- Preview URL comment (PR open/sync only) ---------------------------
+      - name: Comment preview URL
+        if: github.event_name == 'pull_request' && github.event.action != 'closed'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          slug=$(echo "$BRANCH" | tr 'A-Z' 'a-z' | sed 's#[^a-z0-9]#-#g; s#^-*##; s#-*$##')
+          hash=$(printf '%s' "$BRANCH" | sha1sum | cut -c1-4)
+          owner="${GITHUB_REPOSITORY_OWNER}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          url="https://${owner}.github.io/${repo}/preview/${slug}-${hash}/"
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --edit-last --create-if-none \
+            --body "🚀 Preview for \`${BRANCH}\`: ${url}"
+
+  cleanup:
+    # On PR close (merged or not): drop the preview folder; if merged, delete the branch.
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove preview folder and delete merged branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref }}
+          MERGED: ${{ github.event.pull_request.merged }}
+        run: |
+          slug=$(echo "$BRANCH" | tr 'A-Z' 'a-z' | sed 's#[^a-z0-9]#-#g; s#^-*##; s#-*$##')
+          hash=$(printf '%s' "$BRANCH" | sha1sum | cut -c1-4)
+          dir="preview/${slug}-${hash}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages
+            git worktree add gp gh-pages
+            if [ -d "gp/$dir" ]; then
+              git -C gp rm -r "$dir"
+              git -C gp commit -m "cleanup: remove preview for ${BRANCH}"
+              git -C gp push origin gh-pages
+            fi
+          fi
+          if [ "$MERGED" = "true" ]; then
+            gh api -X DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${BRANCH}" || true
+          fi

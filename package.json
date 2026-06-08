@@ -1,0 +1,24 @@
+{
+  "name": "tetris",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tetris for Space Console — a zero-build static game driven by the shared intent vocabulary (keyboard / TV remote / gamepad, controller-ready).",
+  "type": "module",
+  "scripts": {
+    "dev": "live-server --port=5175 --no-browser --entry-file=index.html .",
+    "start": "serve --listen 5175 .",
+    "preview": "serve --listen 5175 .",
+    "lint": "eslint .",
+    "build": "node scripts/stamp.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "eslint": "^9.13.0",
+    "globals": "^15.11.0",
+    "live-server": "^1.2.2",
+    "serve": "^14.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

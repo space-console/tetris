@@ -1,0 +1,9 @@
+# Build output — the cache-busted site is generated in CI, never committed.
+# Source (index.html + assets) is the single source of truth.
+_dist/
+node_modules/
+
+# Local runtime / tooling
+server.log
+package-lock.json
+.DS_Store
