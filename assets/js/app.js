@@ -6,6 +6,7 @@
 
 import { Engine, COLS, ROWS } from "./engine.js";
 import { Input } from "./input.js";
+import { Sound } from "./sound.js";
 
 // Colours indexed by the engine's cell ids (1..7 = I O T S Z J L).
 const COLORS = [
@@ -21,13 +22,17 @@ const COLORS = [
 
 const engine = new Engine();
 const input = new Input();
+const sound = new Sound();
 
 const boardCanvas = document.getElementById("board");
 const nextCanvas = document.getElementById("next");
 const bctx = boardCanvas.getContext("2d");
 const nctx = nextCanvas.getContext("2d");
 
-const CELL = boardCanvas.width / COLS; // 30px
+const CELL = boardCanvas.width / COLS; // 40px
+
+// How long the line-clear flash plays before the rows actually drop (ms).
+const CLEAR_MS = 240;
 
 const els = {
   status: document.getElementById("status"),
@@ -37,18 +42,23 @@ const els = {
   overlay: document.getElementById("overlay"),
   overlayTitle: document.getElementById("overlayTitle"),
   overlayMsg: document.getElementById("overlayMsg"),
+  mute: document.getElementById("mute"),
 };
 
 // idle | playing | paused | over
 let state = "idle";
 let lastTime = 0;
-let dropAcc = 0; // ms accumulated toward the next gravity step
+let dropAcc = 0;        // ms accumulated toward the next gravity step
+let clearAnim = null;   // { rows: number[], start: ms } while a clear plays
 
 // ---- Game-state transitions ----------------------------------------------
 function startGame() {
+  sound.resume();   // first key press unlocks audio (autoplay policy)
+  sound.start();
   engine.reset();
   state = "playing";
   dropAcc = 0;
+  clearAnim = null;
   lastTime = performance.now();
   hideOverlay();
   setStatus("");
@@ -76,20 +86,33 @@ function gameOver() {
   setStatus("Game over");
 }
 
-engine.addEventListener("gameover", gameOver);
+engine.addEventListener("lock", () => sound.lock());
+engine.addEventListener("lineclear", (e) => {
+  clearAnim = { rows: e.detail.rows, start: performance.now() };
+  sound.clear(e.detail.cleared);
+});
+engine.addEventListener("lines", (e) => {
+  if (e.detail.leveledUp) sound.levelUp();
+});
+engine.addEventListener("gameover", () => {
+  sound.gameOver();
+  gameOver();
+});
 
 // ---- Intent handling ------------------------------------------------------
 input.on((intent) => {
   if (state === "playing") {
+    // Ignore movement while the clear animation plays (the piece is gone).
+    if (engine.isClearing() && intent !== "back") return;
     switch (intent) {
-      case "left": engine.move(-1); break;
-      case "right": engine.move(1); break;
-      case "up": engine.rotate(); break;
+      case "left": if (engine.move(-1)) sound.move(); break;
+      case "right": if (engine.move(1)) sound.move(); break;
+      case "up": if (engine.rotate()) sound.rotate(); break;
       case "down":
         engine.softDrop();
         dropAcc = 0; // resync gravity so soft drop feels responsive
         break;
-      case "enter": engine.hardDrop(); dropAcc = 0; break;
+      case "enter": sound.drop(); engine.hardDrop(); dropAcc = 0; break;
       case "back": pause(); break;
     }
     draw();
@@ -106,16 +129,27 @@ input.on((intent) => {
 // ---- Gravity loop ---------------------------------------------------------
 function loop(now) {
   if (state === "playing") {
-    const dt = now - lastTime;
-    lastTime = now;
-    dropAcc += dt;
-    const interval = engine.dropInterval();
-    while (dropAcc >= interval) {
-      dropAcc -= interval;
-      engine.step();
-      if (state !== "playing") break; // a lock may have ended the game
+    if (engine.isClearing()) {
+      // Gravity is paused while the full rows flash; drop them when done.
+      if (clearAnim && now - clearAnim.start >= CLEAR_MS) {
+        engine.commitClear();
+        clearAnim = null;
+        dropAcc = 0;
+      }
+      lastTime = now;
+      draw(now);
+    } else {
+      const dt = now - lastTime;
+      lastTime = now;
+      dropAcc += dt;
+      const interval = engine.dropInterval();
+      while (dropAcc >= interval) {
+        dropAcc -= interval;
+        engine.step();
+        if (state !== "playing" || engine.isClearing()) break; // lock may end game / start a clear
+      }
+      draw(now);
     }
-    draw();
   } else {
     lastTime = now;
   }
@@ -123,7 +157,7 @@ function loop(now) {
 }
 
 // ---- Rendering ------------------------------------------------------------
-function draw() {
+function draw(now = performance.now()) {
   els.score.textContent = engine.score;
   els.lines.textContent = engine.lines;
   els.level.textContent = engine.level;
@@ -136,6 +170,20 @@ function draw() {
     for (let x = 0; x < COLS; x++) {
       const id = engine.grid[y][x];
       if (id) drawCell(bctx, x, y, COLORS[id]);
+    }
+  }
+
+  // Line-clear animation: the full rows flash white and collapse before they go.
+  if (engine.isClearing() && clearAnim) {
+    const t = Math.min(1, (now - clearAnim.start) / CLEAR_MS);
+    for (const gy of clearAnim.rows) {
+      bctx.clearRect(0, gy * CELL, boardCanvas.width, CELL);
+      const h = CELL * (1 - t);                     // collapse toward the row centre
+      bctx.globalAlpha = 1 - t;                     // and fade out
+      bctx.fillStyle = "#ffffff";
+      roundRect(bctx, 1, gy * CELL + (CELL - h) / 2, boardCanvas.width - 2, Math.max(0, h - 2), 5);
+      bctx.fill();
+      bctx.globalAlpha = 1;
     }
   }
 
@@ -198,7 +246,7 @@ function drawNext() {
   nctx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
   const p = engine.next;
   if (!p) return;
-  const ncell = 32;
+  const ncell = 36;
   const cells = engine.cells({ kind: p.kind, rot: 0, x: 0, y: 0 });
   // Centre the piece within the 4x4 preview box.
   const xs = cells.map((c) => c[0]);
@@ -244,9 +292,23 @@ function setStatus(text) {
   els.status.textContent = text;
 }
 
+// ---- Mute control (meta, deliberately outside the gameplay intent layer) ---
+function renderMute() {
+  els.mute.textContent = sound.muted ? "🔇" : "🔊";
+  els.mute.setAttribute("aria-pressed", String(sound.muted));
+}
+function toggleMute() {
+  sound.toggleMute();
+  renderMute();
+}
+
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+  els.mute.addEventListener("click", toggleMute);
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "m" || e.key === "M") toggleMute();
+  });
   draw();             // render the empty board behind the start overlay
   showOverlay("Tetris", "Press <kbd>Enter</kbd> to start");
   requestAnimationFrame(loop);

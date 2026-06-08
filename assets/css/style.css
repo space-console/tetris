@@ -72,6 +72,19 @@ body {
 
 .topbar__hint { margin-inline: auto; color: var(--text-dim); font-size: 0.95em; }
 
+.mute {
+  margin-left: auto;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 1.1em;
+  line-height: 1;
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1);
+  cursor: pointer;
+}
+.mute:hover { border-color: var(--focus); }
+
 /* ---- Stage: playfield + side panel -------------------------------------- */
 .stage {
   min-height: 0;
@@ -84,8 +97,8 @@ body {
 
 .board {
   position: relative;
-  /* The canvas is 300×600 (10×20 @ 30px); scale to fit the available height. */
-  height: min(74vh, 600px);
+  /* The canvas is 400×800 (10×20 @ 40px); scale to fill the available height. */
+  height: min(82vh, 860px);
   aspect-ratio: 1 / 2;
   border-radius: var(--radius);
   background: rgba(8, 10, 24, 0.72);

@@ -18,12 +18,13 @@
         <span class="brand__name">Tetris</span>
       </div>
       <div class="topbar__hint" id="status" aria-live="polite">Press Enter to start</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
     </header>
 
     <main class="stage">
       <!-- Playfield -->
       <section class="board" aria-label="Playfield">
-        <canvas id="board" width="300" height="600"></canvas>
+        <canvas id="board" width="400" height="800"></canvas>
         <!-- Overlay for start / pause / game-over messaging -->
         <div class="overlay" id="overlay">
           <div class="overlay__card">
@@ -37,7 +38,7 @@
       <aside class="panel" aria-label="Game info">
         <div class="panel__block">
           <h2 class="panel__label">Next</h2>
-          <canvas id="next" width="160" height="160"></canvas>
+          <canvas id="next" width="180" height="180"></canvas>
         </div>
         <dl class="scoreboard">
           <div class="score"><dt>Score</dt><dd id="score">0</dd></div>
@@ -53,6 +54,7 @@
       <span class="hint"><kbd class="key">↓</kbd> Soft drop</span>
       <span class="hint"><kbd class="key">Enter</kbd> Hard drop</span>
       <span class="hint"><kbd class="key">Back</kbd> Pause</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
     </footer>
   </div>
 
