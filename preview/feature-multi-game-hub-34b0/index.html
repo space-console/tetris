@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Space Console — Games</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./assets/css/base.css" />
+  <link rel="stylesheet" href="./assets/css/hub.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__name">Space&nbsp;Console</span>
+      </div>
+      <div class="topbar__hint">Pick a game</div>
+    </header>
+
+    <main class="hub">
+      <h1 class="hub__title">Games</h1>
+      <div class="hub__grid" id="grid" role="list">
+        <a class="tile" data-focusable data-href="./tetris/" role="listitem"
+           style="--art: linear-gradient(135deg, #4f8cff, #b14bff)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Tetris</div>
+            <div class="tile__tag">Puzzle · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./snake/" role="listitem"
+           style="--art: linear-gradient(135deg, #16a34a, #38e8a0)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Snake</div>
+            <div class="tile__tag">Arcade · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./sudoku/" role="listitem"
+           style="--art: linear-gradient(135deg, #0f2027, #2c5364)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Sudoku</div>
+            <div class="tile__tag">Puzzle · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./tic-tac-toe/" role="listitem"
+           style="--art: linear-gradient(135deg, #f59e0b, #ef4444)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Tic-Tac-Toe</div>
+            <div class="tile__tag">2 players · X &amp; O</div>
+          </div>
+        </a>
+      </div>
+    </main>
+
+    <footer class="hintbar">
+      <span class="hint"><kbd class="key">↑↓←→</kbd> Navigate</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Play</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./assets/js/hub.js?v=249f7edb-2ece-4311-98c3-4217e5a5562d"></script>
+</body>
+</html>

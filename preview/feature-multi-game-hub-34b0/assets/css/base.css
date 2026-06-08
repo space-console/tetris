@@ -1,0 +1,177 @@
+/* ==========================================================================
+   Space Console — shared base styles for the games hub and every game.
+   10-foot UI design tokens (palette, safe area, fluid type). No build step.
+   Each game adds a small style.css for its own playfield on top of this.
+   ========================================================================== */
+
+:root {
+  --bg:        #05060f;
+  --bg-2:      #0b0e1f;
+  --surface:   #121633;
+  --surface-2: #1b2150;
+  --text:      #eef1ff;
+  --text-dim:  #9aa3c7;
+  --accent:    #4f8cff;
+  --accent-2:  #b14bff;
+  --focus:     #6ce0ff;
+  --good:      #38e8a0;
+  --bad:       #ff5a5a;
+
+  /* TV-safe area: many TVs overscan ~5%; keep content inside this inset. */
+  --safe-x: max(4vw, env(safe-area-inset-left, 0px));
+  --safe-y: max(4vh, env(safe-area-inset-top, 0px));
+
+  --u: clamp(8px, 0.83vw, 20px);
+  --fs-base: clamp(15px, 1.15vw, 30px);
+  --radius: calc(var(--u) * 1.4);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", Roboto, "Helvetica Neue", system-ui, sans-serif;
+  font-size: var(--fs-base);
+  line-height: 1.4;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+
+body {
+  background:
+    radial-gradient(1200px 700px at 80% -10%, rgba(177, 75, 255, 0.18), transparent 60%),
+    radial-gradient(1000px 600px at -10% 110%, rgba(79, 140, 255, 0.20), transparent 60%),
+    var(--bg);
+}
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: var(--safe-y) var(--safe-x);
+  gap: calc(var(--u) * 2);
+}
+
+/* ---- Top bar ------------------------------------------------------------ */
+.topbar { display: flex; align-items: center; gap: calc(var(--u) * 3); }
+
+.brand { display: flex; align-items: center; gap: calc(var(--u) * 1.2); }
+.brand__mark {
+  width: calc(var(--u) * 2.6);
+  height: calc(var(--u) * 2.6);
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 calc(var(--u) * 2) rgba(79, 140, 255, 0.6);
+}
+.brand__name { font-size: 1.3em; font-weight: 700; letter-spacing: 0.04em; }
+.brand a { color: inherit; text-decoration: none; display: flex; align-items: center; gap: calc(var(--u) * 1.2); }
+
+.topbar__hint { margin-inline: auto; color: var(--text-dim); font-size: 0.95em; }
+
+.mute {
+  margin-left: auto;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 1.1em;
+  line-height: 1;
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1);
+  cursor: pointer;
+}
+.mute:hover { border-color: var(--focus); }
+
+/* ---- Generic centered stage (games override as needed) ------------------ */
+.stage {
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  gap: calc(var(--u) * 3);
+}
+
+/* ---- Playfield frame (canvas games) ------------------------------------- */
+.board {
+  position: relative;
+  height: min(82vh, 860px);
+  border-radius: var(--radius);
+  background: rgba(8, 10, 24, 0.72);
+  border: 1px solid var(--surface-2);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+.board canvas { display: block; width: 100%; height: 100%; }
+
+/* ---- Overlay (start / pause / win / game over) -------------------------- */
+.overlay {
+  position: absolute; inset: 0;
+  display: grid; place-items: center;
+  background: rgba(5, 6, 15, 0.78);
+  backdrop-filter: blur(4px);
+  transition: opacity 180ms ease;
+}
+.overlay--hidden { opacity: 0; pointer-events: none; }
+.overlay__card { text-align: center; padding: calc(var(--u) * 2); }
+.overlay__title {
+  font-size: clamp(2em, 4vw, 4em);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.overlay__msg { color: var(--text-dim); font-size: 1.05em; margin-top: calc(var(--u) * 1.2); }
+
+/* ---- Side panel + scoreboard (canvas games) ----------------------------- */
+.panel {
+  display: flex; flex-direction: column; gap: calc(var(--u) * 2.4);
+  min-width: clamp(140px, 14vw, 240px);
+}
+.panel__block {
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  padding: calc(var(--u) * 1.6);
+}
+.panel__label {
+  font-size: 0.8em; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.18em;
+  margin-bottom: calc(var(--u) * 1);
+}
+.panel__block canvas { display: block; width: 100%; height: auto; }
+
+.scoreboard { display: flex; flex-direction: column; gap: calc(var(--u) * 1.2); }
+.score {
+  display: flex; align-items: baseline; justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.6);
+}
+.score dt { color: var(--text-dim); font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.12em; }
+.score dd {
+  font-size: 1.5em; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--focus);
+}
+
+/* ---- Hint bar ----------------------------------------------------------- */
+.hintbar {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: calc(var(--u) * 3); color: var(--text-dim); font-size: 0.85em;
+}
+.hint { display: flex; align-items: center; gap: calc(var(--u) * 0.8); }
+.key, kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2.2em; padding: 0.15em 0.5em;
+  background: var(--surface); border: 1px solid var(--surface-2);
+  border-radius: 0.4em; font-family: inherit; font-size: 0.9em; color: var(--text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 1ms !important; animation-duration: 1ms !important; }
+}
