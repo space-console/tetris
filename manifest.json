@@ -1,7 +1,7 @@
 {
-  "name": "Tetris — Space Console",
-  "short_name": "Tetris",
-  "description": "Tetris for the Space Console — play on the TV, controller-ready.",
+  "name": "Space Console Games",
+  "short_name": "Games",
+  "description": "A collection of zero-build games for the Space Console — Tetris, Snake, Sudoku, Tic-Tac-Toe.",
   "start_url": "./index.html",
   "display": "fullscreen",
   "orientation": "landscape",

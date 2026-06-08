@@ -1,8 +1,8 @@
 {
-  "name": "tetris",
+  "name": "games",
   "version": "0.1.0",
   "private": true,
-  "description": "Tetris for Space Console — a zero-build static game driven by the shared intent vocabulary (keyboard / TV remote / gamepad, controller-ready).",
+  "description": "Space Console games — a zero-build collection (Tetris, Snake, Sudoku, Tic-Tac-Toe) driven by the shared intent vocabulary (keyboard / TV remote / gamepad, controller-ready).",
   "type": "module",
   "scripts": {
     "dev": "live-server --port=5175 --no-browser --entry-file=index.html .",
