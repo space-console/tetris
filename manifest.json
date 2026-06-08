@@ -1,0 +1,18 @@
+{
+  "name": "Tetris — Space Console",
+  "short_name": "Tetris",
+  "description": "Tetris for the Space Console — play on the TV, controller-ready.",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#05060f",
+  "theme_color": "#05060f",
+  "icons": [
+    {
+      "src": "./assets/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
