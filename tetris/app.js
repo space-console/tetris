@@ -4,9 +4,9 @@
 // (idle → playing → paused → over). The engine owns all game logic; this file
 // is input + render only.
 
-import { Engine, COLS, ROWS } from "./engine.js?v=9cd7a4d6-fb77-41bf-a6a5-a672e03f21a6";
-import { Input } from "./input.js?v=9cd7a4d6-fb77-41bf-a6a5-a672e03f21a6";
-import { Sound } from "./sound.js?v=9cd7a4d6-fb77-41bf-a6a5-a672e03f21a6";
+import { Engine, COLS, ROWS } from "./engine.js?v=ef042761-3773-4f34-a021-94514d3effa3";
+import { Input } from "../assets/js/shared/input.js?v=ef042761-3773-4f34-a021-94514d3effa3";
+import { Sound } from "../assets/js/shared/sound.js?v=ef042761-3773-4f34-a021-94514d3effa3";
 
 // Colours indexed by the engine's cell ids (1..7 = I O T S Z J L).
 const COLORS = [
@@ -68,7 +68,7 @@ function startGame() {
 function pause() {
   if (state !== "playing") return;
   state = "paused";
-  showOverlay("Paused", "Press <kbd>Enter</kbd> to resume");
+  showOverlay("Paused", "<kbd>Enter</kbd> resume · <kbd>Back</kbd> menu");
   setStatus("Paused");
 }
 
@@ -119,8 +119,9 @@ input.on((intent) => {
     return;
   }
 
-  // Not playing: Enter advances (start / resume / restart); Back resumes too.
-  if (intent === "enter" || intent === "back") {
+  // Not playing: Enter advances (start / resume / restart); Back exits to the hub.
+  if (intent === "back") { location.href = "../"; return; }
+  if (intent === "enter") {
     if (state === "idle" || state === "over") startGame();
     else if (state === "paused") resume();
   }
