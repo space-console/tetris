@@ -1,12 +1,13 @@
-// Flat ESLint config for the zero-build launcher.
-// Plain browser ES modules — no framework, no transpile.
+// Flat ESLint config for the zero-build games collection.
+// Plain browser ES modules — no framework, no transpile. Lints the shared
+// modules, the hub, and every game folder.
 import js from "@eslint/js";
 import globals from "globals";
 
 export default [
   js.configs.recommended,
   {
-    files: ["assets/js/**/*.js", "scripts/**/*.mjs"],
+    files: ["**/*.js", "scripts/**/*.mjs"],
     languageOptions: {
       ecmaVersion: "latest",
       sourceType: "module",

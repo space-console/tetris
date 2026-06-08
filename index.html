@@ -5,59 +5,65 @@
   <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#05060f" />
-  <title>Tetris — Space Console</title>
+  <title>Space Console — Games</title>
   <link rel="manifest" href="./manifest.json" />
-  <link rel="stylesheet" href="./assets/css/style.css" />
+  <link rel="stylesheet" href="./assets/css/base.css" />
+  <link rel="stylesheet" href="./assets/css/hub.css" />
 </head>
 <body>
-  <!-- safe-area wrapper protects against TV overscan; see --safe-* in style.css -->
   <div class="app" id="app">
     <header class="topbar">
       <div class="brand">
         <span class="brand__mark" aria-hidden="true"></span>
-        <span class="brand__name">Tetris</span>
+        <span class="brand__name">Space&nbsp;Console</span>
       </div>
-      <div class="topbar__hint" id="status" aria-live="polite">Press Enter to start</div>
-      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+      <div class="topbar__hint">Pick a game</div>
     </header>
 
-    <main class="stage">
-      <!-- Playfield -->
-      <section class="board" aria-label="Playfield">
-        <canvas id="board" width="400" height="800"></canvas>
-        <!-- Overlay for start / pause / game-over messaging -->
-        <div class="overlay" id="overlay">
-          <div class="overlay__card">
-            <h1 class="overlay__title" id="overlayTitle">Tetris</h1>
-            <p class="overlay__msg" id="overlayMsg">Press <kbd>Enter</kbd> to start</p>
+    <main class="hub">
+      <h1 class="hub__title">Games</h1>
+      <div class="hub__grid" id="grid" role="list">
+        <a class="tile" data-focusable data-href="./tetris/" role="listitem"
+           style="--art: linear-gradient(135deg, #4f8cff, #b14bff)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Tetris</div>
+            <div class="tile__tag">Puzzle · 1 player</div>
           </div>
-        </div>
-      </section>
-
-      <!-- Side panel: next piece + scoreboard -->
-      <aside class="panel" aria-label="Game info">
-        <div class="panel__block">
-          <h2 class="panel__label">Next</h2>
-          <canvas id="next" width="180" height="180"></canvas>
-        </div>
-        <dl class="scoreboard">
-          <div class="score"><dt>Score</dt><dd id="score">0</dd></div>
-          <div class="score"><dt>Lines</dt><dd id="lines">0</dd></div>
-          <div class="score"><dt>Level</dt><dd id="level">1</dd></div>
-        </dl>
-      </aside>
+        </a>
+        <a class="tile" data-focusable data-href="./snake/" role="listitem"
+           style="--art: linear-gradient(135deg, #16a34a, #38e8a0)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Snake</div>
+            <div class="tile__tag">Arcade · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./sudoku/" role="listitem"
+           style="--art: linear-gradient(135deg, #0f2027, #2c5364)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Sudoku</div>
+            <div class="tile__tag">Puzzle · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./tic-tac-toe/" role="listitem"
+           style="--art: linear-gradient(135deg, #f59e0b, #ef4444)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Tic-Tac-Toe</div>
+            <div class="tile__tag">2 players · X &amp; O</div>
+          </div>
+        </a>
+      </div>
     </main>
 
-    <footer class="hintbar" id="hintbar">
-      <span class="hint"><kbd class="key">←→</kbd> Move</span>
-      <span class="hint"><kbd class="key">↑</kbd> Rotate</span>
-      <span class="hint"><kbd class="key">↓</kbd> Soft drop</span>
-      <span class="hint"><kbd class="key">Enter</kbd> Hard drop</span>
-      <span class="hint"><kbd class="key">Back</kbd> Pause</span>
-      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    <footer class="hintbar">
+      <span class="hint"><kbd class="key">↑↓←→</kbd> Navigate</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Play</span>
     </footer>
   </div>
 
-  <script type="module" src="./assets/js/app.js"></script>
+  <script type="module" src="./assets/js/hub.js"></script>
 </body>
 </html>

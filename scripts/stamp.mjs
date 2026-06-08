@@ -22,7 +22,15 @@ const OUT = "_dist";
 
 // What gets copied into the deployable site. Everything the browser needs and
 // nothing else (no node_modules, scripts, CI, git, or the previous build).
-const INCLUDE = ["index.html", "manifest.json", "assets"];
+const INCLUDE = [
+  "index.html",
+  "manifest.json",
+  "assets",
+  "tetris",
+  "snake",
+  "sudoku",
+  "tic-tac-toe",
+];
 
 const version = randomUUID();
 
