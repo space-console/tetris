@@ -70,6 +70,7 @@ export class Engine extends EventTarget {
     this.lines = 0;
     this.level = 1;
     this.over = false;
+    this.clearingRows = []; // rows held full during the line-clear animation
     this._spawn();
   }
 
@@ -192,26 +193,50 @@ export class Engine extends EventTarget {
       }
       this.grid[y][x] = id;
     }
-    this._clearLines();
-    this._spawn();
+    this.dispatchEvent(new CustomEvent("lock"));
+
+    // Find full rows. If any, enter the clearing phase: leave them on the board
+    // so the shell can animate them, and hold off spawning until commitClear().
+    const full = [];
+    for (let y = 0; y < ROWS; y++) {
+      if (this.grid[y].every((c) => c !== 0)) full.push(y);
+    }
+    if (full.length > 0) {
+      this.clearingRows = full;
+      this.piece = null; // nothing falls while the rows flash
+      this.dispatchEvent(
+        new CustomEvent("lineclear", { detail: { rows: full, cleared: full.length } })
+      );
+      this._changed();
+    } else {
+      this._spawn();
+    }
   }
 
-  _clearLines() {
-    let cleared = 0;
-    for (let y = ROWS - 1; y >= 0; y--) {
-      if (this.grid[y].every((c) => c !== 0)) {
-        this.grid.splice(y, 1);
-        this.grid.unshift(new Array(COLS).fill(0));
-        cleared += 1;
-        y += 1; // re-check the row that fell into this slot
-      }
-    }
-    if (cleared > 0) {
-      this.score += LINE_POINTS[cleared] * this.level;
-      this.lines += cleared;
-      this.level = 1 + Math.floor(this.lines / 10);
-      this.dispatchEvent(new CustomEvent("lines", { detail: { cleared } }));
-    }
+  /** True while full rows are being animated, before commitClear() removes them. */
+  isClearing() {
+    return this.clearingRows.length > 0;
+  }
+
+  // Finish the clearing phase: drop the full rows, score, level up, spawn next.
+  // The shell calls this once its clear animation has played.
+  commitClear() {
+    const cleared = this.clearingRows.length;
+    if (cleared === 0) return;
+    const gone = new Set(this.clearingRows);
+    const kept = this.grid.filter((_, y) => !gone.has(y));
+    while (kept.length < ROWS) kept.unshift(new Array(COLS).fill(0));
+    this.grid = kept;
+
+    this.score += LINE_POINTS[cleared] * this.level;
+    const prevLevel = this.level;
+    this.lines += cleared;
+    this.level = 1 + Math.floor(this.lines / 10);
+    this.clearingRows = [];
+    this.dispatchEvent(
+      new CustomEvent("lines", { detail: { cleared, leveledUp: this.level > prevLevel } })
+    );
+    this._spawn();
   }
 
   // Current gravity interval in ms for the active level.
