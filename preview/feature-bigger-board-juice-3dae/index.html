@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Tetris — Space Console</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./assets/css/style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in style.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__name">Tetris</span>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Press Enter to start</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Playfield -->
+      <section class="board" aria-label="Playfield">
+        <canvas id="board" width="400" height="800"></canvas>
+        <!-- Overlay for start / pause / game-over messaging -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Tetris</h1>
+            <p class="overlay__msg" id="overlayMsg">Press <kbd>Enter</kbd> to start</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side panel: next piece + scoreboard -->
+      <aside class="panel" aria-label="Game info">
+        <div class="panel__block">
+          <h2 class="panel__label">Next</h2>
+          <canvas id="next" width="180" height="180"></canvas>
+        </div>
+        <dl class="scoreboard">
+          <div class="score"><dt>Score</dt><dd id="score">0</dd></div>
+          <div class="score"><dt>Lines</dt><dd id="lines">0</dd></div>
+          <div class="score"><dt>Level</dt><dd id="level">1</dd></div>
+        </dl>
+      </aside>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">←→</kbd> Move</span>
+      <span class="hint"><kbd class="key">↑</kbd> Rotate</span>
+      <span class="hint"><kbd class="key">↓</kbd> Soft drop</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Hard drop</span>
+      <span class="hint"><kbd class="key">Back</kbd> Pause</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./assets/js/app.js?v=76670f5c-77ee-4f00-b3b8-3fa64afd64d0"></script>
+</body>
+</html>
