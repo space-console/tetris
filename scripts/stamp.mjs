@@ -33,6 +33,10 @@ const INCLUDE = [
   "chess",
   "poker",
   "video-poker",
+  "uno",
+  "bridge",
+  "blackjack",
+  "solitaire",
 ];
 
 const version = randomUUID();
