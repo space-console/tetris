@@ -1,0 +1,98 @@
+/* Tic-Tac-Toe-specific layout. Shared chrome (tokens, topbar, overlay,
+   scoreboard, hintbar) lives in ../assets/css/base.css. */
+
+.stage {
+  grid-template-columns: auto auto;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The board is a square; cap it to the shorter of viewport height/width. */
+.board {
+  aspect-ratio: 1 / 1;
+  height: min(72vh, 72vw, 720px);
+  padding: calc(var(--u) * 1.4);
+}
+
+/* 3×3 of big cells with a thin gap that reads as the classic grid lines. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: calc(var(--u) * 1);
+  width: 100%;
+  height: 100%;
+  background: var(--surface-2); /* shows through the gaps as the grid lines */
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.cell {
+  display: grid;
+  place-items: center;
+  background: rgba(8, 10, 24, 0.72);
+  font-size: clamp(3em, 12vh, 8em);
+  font-weight: 800;
+  line-height: 1;
+  transition: background 120ms ease, box-shadow 120ms ease;
+  /* Cells own their taps: keep tap latency low and let the global gesture
+     layer ignore them (they also carry data-touch-ignore in app.js). */
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* X in the accent blue, O in a contrasting warm tone. */
+.cell--x { color: var(--accent); text-shadow: 0 0 calc(var(--u) * 1.5) rgba(79, 140, 255, 0.55); }
+.cell--o { color: #ff9f43; text-shadow: 0 0 calc(var(--u) * 1.5) rgba(255, 159, 67, 0.55); }
+
+/* The roaming cursor: a glowing inset ring on the hovered cell. */
+.cell--cursor {
+  background: rgba(108, 224, 255, 0.10);
+  box-shadow: inset 0 0 0 calc(var(--u) * 0.4) var(--focus);
+}
+
+/* The three winning cells light up green. */
+.cell--win {
+  background: rgba(56, 232, 160, 0.18);
+  box-shadow: inset 0 0 0 calc(var(--u) * 0.4) var(--good);
+}
+
+/* ---- Responsive: portrait phones ----------------------------------------
+   Stack the scoreboard below the board and size the square to fit the screen
+   in both axes, so it never overflows at 360–414px wide. */
+@media (max-width: 640px), (orientation: portrait) {
+  .stage {
+    grid-auto-flow: row;
+    grid-template-columns: auto;
+    align-content: center;
+    gap: calc(var(--u) * 1.6);
+  }
+
+  .board {
+    /* Square, capped by the shorter of available height/width. */
+    width: min(64vh, 92vw);
+    height: min(64vh, 92vw);
+    max-width: 92vw;
+    padding: calc(var(--u) * 1);
+  }
+
+  /* Scoreboard becomes a compact horizontal strip under the board. */
+  .panel {
+    min-width: 0;
+    width: min(64vh, 92vw);
+    max-width: 92vw;
+  }
+  .scoreboard {
+    flex-direction: row;
+    justify-content: center;
+    gap: calc(var(--u) * 1.2);
+  }
+  .score {
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(var(--u) * 0.2);
+    text-align: center;
+  }
+}
