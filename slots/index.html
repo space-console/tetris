@@ -5,7 +5,7 @@
   <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#05060f" />
-  <title>Video Poker — Space Console</title>
+  <title>Slots — Space Console</title>
   <link rel="manifest" href="../manifest.json" />
   <link rel="stylesheet" href="../assets/css/base.css" />
   <link rel="stylesheet" href="./style.css" />
@@ -17,48 +17,55 @@
       <div class="brand">
         <a href="../" aria-label="Back to games">
           <span class="brand__mark" aria-hidden="true"></span>
-          <span class="brand__name">Video Poker</span>
+          <span class="brand__name">Slots</span>
         </a>
       </div>
-      <div class="topbar__hint" id="status" aria-live="polite">Jacks or Better</div>
+      <div class="topbar__hint" id="status" aria-live="polite">Press Enter to spin</div>
       <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
     </header>
 
     <main class="stage">
-      <section class="table" aria-label="Video poker table">
-        <!-- Paytable: rows are filled in by app.js; the hit row highlights. -->
-        <table class="paytable" id="paytable" aria-label="Pay table">
+      <!-- The cabinet stacks: paytable, the three reels, scoreboard, controls. -->
+      <section class="machine" aria-label="Slot machine">
+        <!-- Paytable: three-of-a-kind per symbol + the partial wins. -->
+        <table class="paytable" aria-label="Paytable">
+          <thead>
+            <tr><th scope="col">Pays</th><th scope="col">Combination</th><th scope="col">×&nbsp;Bet</th></tr>
+          </thead>
           <tbody id="paytableBody"></tbody>
         </table>
 
-        <!-- The five-card hand; cards are built once by app.js. -->
-        <div class="hand" id="hand" role="group" aria-label="Your hand"></div>
+        <!-- The three reels (a single centre payline). -->
+        <div class="reels" id="reels" aria-label="Reels">
+          <div class="reel" data-reel="0"><span class="reel__symbol" id="reel0">🍒</span></div>
+          <div class="reel" data-reel="1"><span class="reel__symbol" id="reel1">🍋</span></div>
+          <div class="reel" data-reel="2"><span class="reel__symbol" id="reel2">🍊</span></div>
+          <!-- The centre payline marker. -->
+          <span class="payline" aria-hidden="true"></span>
+        </div>
 
-        <!-- Scoreboard: credits / bet / last win / hand. -->
-        <dl class="scoreboard vp-scoreboard">
+        <!-- Scoreboard strip: credits / bet / last win. -->
+        <dl class="scoreboard slots-scoreboard">
           <div class="score"><dt>Credits</dt><dd id="credits">100</dd></div>
           <div class="score"><dt>Bet</dt><dd id="bet">1</dd></div>
-          <div class="score"><dt>Win</dt><dd id="win">0</dd></div>
-          <div class="score vp-score--hand"><dt>Hand</dt><dd id="handName">—</dd></div>
+          <div class="score slots-score--win"><dt>Win</dt><dd id="win">0</dd></div>
         </dl>
 
-        <!-- Always-visible primary controls (mouse, touch, and remote). -->
-        <section class="controls" id="controls" aria-label="Controls"></section>
+        <!-- Always-visible primary controls (populated in app.js). -->
+        <div class="controls" id="controls"></div>
 
         <!-- Overlay for start / game-over messaging. -->
-        <div class="overlay" id="overlay">
+        <div class="overlay overlay--hidden" id="overlay">
           <div class="overlay__card">
-            <h1 class="overlay__title" id="overlayTitle">Video Poker</h1>
-            <p class="overlay__msg" id="overlayMsg">Press <kbd>Enter</kbd> to deal</p>
+            <h1 class="overlay__title" id="overlayTitle">Slots</h1>
+            <p class="overlay__msg" id="overlayMsg">Tap or press <kbd>Enter</kbd> to spin</p>
           </div>
         </div>
       </section>
     </main>
 
     <footer class="hintbar" id="hintbar">
-      <span class="hint"><kbd class="key">←→</kbd> Pick card</span>
-      <span class="hint"><kbd class="key">↑</kbd> Hold</span>
-      <span class="hint"><kbd class="key">Enter</kbd> Deal · Draw</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Spin</span>
       <span class="hint"><kbd class="key">B</kbd> Bet One</span>
       <span class="hint"><kbd class="key">N</kbd> Bet Max</span>
       <span class="hint"><kbd class="key">Back</kbd> Menu</span>

@@ -5,9 +5,9 @@
 // (menu → playing → promoting → over). The engine owns all chess logic; this
 // file is input + render + modes only.
 
-import { Engine, WHITE, BLACK, rc, idx } from "./engine.js?v=8da4925f-0672-4ddd-8d28-35a61b56ed69";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=8da4925f-0672-4ddd-8d28-35a61b56ed69";
-import { Sound } from "../assets/js/shared/sound.js?v=8da4925f-0672-4ddd-8d28-35a61b56ed69";
+import { Engine, WHITE, BLACK, rc, idx } from "./engine.js?v=5abd3d81-c3ba-4254-baa2-b9a34a23722d";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=5abd3d81-c3ba-4254-baa2-b9a34a23722d";
+import { Sound } from "../assets/js/shared/sound.js?v=5abd3d81-c3ba-4254-baa2-b9a34a23722d";
 
 const engine = new Engine();
 const input = new Input();

@@ -37,6 +37,7 @@
 .dice {
   display: flex;
   justify-content: center;
+  align-items: center;          /* don't stretch the dice taller than square */
   gap: clamp(6px, 2vw, 16px);
   width: 100%;
 }
@@ -45,13 +46,15 @@
 .die {
   position: relative;
   flex: 0 0 auto;
-  width: clamp(44px, 14vw, 78px);
+  width: clamp(48px, 14vw, 86px);
   aspect-ratio: 1 / 1;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
-  gap: 0;
-  padding: 14%;
+  /* A small inset so corner pips sit inside the face. Use a length, NOT a
+     percentage — percentage padding resolves against the PARENT's width, which
+     here collapses the pip grid to zero (the pips would vanish). */
+  padding: 0.5em;
   background: #f6f7fb;
   border: 2px solid #cfd4e6;
   border-radius: calc(var(--u) * 1.1);
@@ -69,7 +72,7 @@
 .pip {
   align-self: center;
   justify-self: center;
-  width: 26%;
+  width: 60%;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   background: transparent;
