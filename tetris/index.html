@@ -32,7 +32,7 @@
         <div class="overlay" id="overlay">
           <div class="overlay__card">
             <h1 class="overlay__title" id="overlayTitle">Tetris</h1>
-            <p class="overlay__msg" id="overlayMsg">Press <kbd>Enter</kbd> to start</p>
+            <p class="overlay__msg" id="overlayMsg">Tap or press <kbd>Enter</kbd> to start</p>
           </div>
         </div>
       </section>
@@ -50,6 +50,9 @@
         </dl>
       </aside>
     </main>
+
+    <!-- On-screen control pad (touch devices only; populated in app.js) -->
+    <section class="touch-only touch-controls" id="touchControls" aria-label="Touch controls"></section>
 
     <footer class="hintbar" id="hintbar">
       <span class="hint"><kbd class="key">←→</kbd> Move</span>

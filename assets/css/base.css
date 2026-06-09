@@ -172,6 +172,61 @@ body {
   border-radius: 0.4em; font-family: inherit; font-size: 0.9em; color: var(--text);
 }
 
+/* ---- Touch controls ----------------------------------------------------- */
+/* Swipes on a playfield must not scroll/zoom the page. */
+body { overscroll-behavior: none; }
+.board { touch-action: none; }
+
+/* On-screen controls show only on touch devices (input.js adds .touch to <html>). */
+html:not(.touch) .touch-only { display: none !important; }
+
+.touch-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.2);
+}
+.tbtn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: calc(var(--u) * 5.5);
+  min-height: calc(var(--u) * 5.5);
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.4);
+  font-size: 1.3em; font-weight: 700; line-height: 1;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.tbtn:active {
+  background: var(--surface-2);
+  border-color: var(--focus);
+  transform: scale(0.96);
+}
+
+/* Tighter safe-area on phones; the keyboard hint bar gives way to gestures /
+   on-screen controls on small touch screens. */
+@media (max-width: 640px) {
+  :root {
+    --safe-x: max(3vw, env(safe-area-inset-left, 0px));
+    --safe-y: max(2vh, env(safe-area-inset-top, 0px));
+  }
+  .topbar__hint { display: none; }
+
+  /* Width containment: keep every game's layout inside the viewport so nothing
+     spills off the right edge. Lets flex/grid tracks shrink and wrap to fit. */
+  .app, .stage, .panel, .scoreboard, .touch-controls,
+  #pad, #touchPad, #touchControls { min-width: 0; max-width: 100%; }
+  .scoreboard { flex-wrap: wrap; }
+  .score { min-width: 0; }
+  .tbtn { min-width: 0; }
+}
+html.touch .hintbar { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 1ms !important; animation-duration: 1ms !important; }
 }
