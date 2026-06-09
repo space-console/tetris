@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Scrabble — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Scrabble</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Loading dictionary…</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Board + rack + controls -->
+      <section class="play" aria-label="Scrabble board">
+        <div class="board">
+          <!-- 15×15 grid of squares; populated by app.js -->
+          <div class="sgrid" id="grid" role="grid" aria-label="Scrabble board"></div>
+
+          <!-- Mode-select / game-over overlay -->
+          <div class="overlay" id="overlay">
+            <div class="overlay__card">
+              <h1 class="overlay__title" id="overlayTitle">Scrabble</h1>
+              <p class="overlay__msg" id="overlayMsg">Loading dictionary…</p>
+              <!-- Mode menu: arrow/enter selectable and tappable -->
+              <div class="menu menu--hidden" id="menu" role="menu" aria-label="Game mode">
+                <button class="menu__item" id="modeTwo" type="button" role="menuitem" data-touch-ignore>2 Players (hot-seat)</button>
+                <button class="menu__item" id="modeAI" type="button" role="menuitem" data-touch-ignore>vs Computer</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Blank-tile letter chooser (hidden until a blank is placed) -->
+          <div class="overlay overlay--hidden" id="blankPick">
+            <div class="overlay__card">
+              <h1 class="overlay__title">Blank tile</h1>
+              <p class="overlay__msg">Pick a letter</p>
+              <div class="blank__grid" id="blankGrid"></div>
+            </div>
+          </div>
+
+          <!-- Pass-device screen between hot-seat turns -->
+          <div class="overlay overlay--hidden" id="passScreen">
+            <div class="overlay__card">
+              <h1 class="overlay__title" id="passTitle">Pass the device</h1>
+              <p class="overlay__msg" id="passMsg">Tap when ready</p>
+              <button class="menu__item" id="passReady" type="button" data-touch-ignore>Ready</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- The active player's rack -->
+        <div class="rackwrap">
+          <div class="rack" id="rack" aria-label="Your rack"></div>
+        </div>
+
+        <!-- Action buttons (always visible) -->
+        <div class="actions" id="actions">
+          <button class="abtn abtn--go" id="btnPlay" type="button" data-touch-ignore>Play</button>
+          <button class="abtn" id="btnRecall" type="button" data-touch-ignore>Recall</button>
+          <button class="abtn" id="btnShuffle" type="button" data-touch-ignore>Shuffle</button>
+          <button class="abtn" id="btnExchange" type="button" data-touch-ignore>Exchange</button>
+          <button class="abtn" id="btnPass" type="button" data-touch-ignore>Pass</button>
+        </div>
+      </section>
+
+      <!-- Side panel: scores, bag, last play -->
+      <aside class="panel" aria-label="Game info">
+        <dl class="scoreboard">
+          <div class="score"><dt id="p1name">Player 1</dt><dd id="p1score">0</dd></div>
+          <div class="score"><dt id="p2name">Player 2</dt><dd id="p2score">0</dd></div>
+          <div class="score"><dt>Bag</dt><dd id="bagLeft">100</dd></div>
+        </dl>
+        <div class="panel__block">
+          <div class="panel__label">Turn</div>
+          <div id="turnInfo">—</div>
+        </div>
+        <div class="panel__block">
+          <div class="panel__label">Last play</div>
+          <div id="lastPlay">—</div>
+        </div>
+        <div class="panel__block legend" aria-label="Premium squares">
+          <div class="panel__label">Premiums</div>
+          <div class="legend__row"><span class="chip chip--tw">TW</span> triple word</div>
+          <div class="legend__row"><span class="chip chip--dw">DW</span> double word</div>
+          <div class="legend__row"><span class="chip chip--tl">TL</span> triple letter</div>
+          <div class="legend__row"><span class="chip chip--dl">DL</span> double letter</div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">↑↓←→</kbd> Cursor</span>
+      <span class="hint"><kbd class="key">A–Z</kbd> Place</span>
+      <span class="hint"><kbd class="key">Bksp</kbd> Recall</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Play</span>
+      <span class="hint"><kbd class="key">Space</kbd> Dir</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
