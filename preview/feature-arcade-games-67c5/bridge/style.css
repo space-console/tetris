@@ -1,0 +1,212 @@
+/* Contract Bridge layout. Shared chrome (tokens, topbar, overlay, hintbar) lives
+   in ../assets/css/base.css. This file owns the 4-seat bridge table, cards, the
+   auction grid, your hand, and the bidding box. Sized in vw/vh/em so it fits a
+   phone in portrait with no horizontal overflow. */
+
+.stage { display: block; min-height: 0; }
+
+/* ---- Table: a 3×3 grid with N top, W/E sides, S bottom, centre middle ----- */
+.table {
+  position: relative;
+  width: 100%;
+  max-width: min(96vw, 760px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    ".  n  ."
+    "w  c  e"
+    ".  s  .";
+  gap: calc(var(--u) * 0.8);
+  padding: calc(var(--u) * 1.2);
+  border-radius: calc(var(--radius) * 2);
+  background:
+    radial-gradient(120% 90% at 50% 45%, rgba(46, 139, 87, 0.30), transparent 70%),
+    rgba(8, 24, 16, 0.72);
+  border: 1px solid var(--surface-2);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0, 0, 0, 0.5),
+    inset 0 0 calc(var(--u) * 6) rgba(0, 0, 0, 0.45);
+}
+
+.seat-slot { display: flex; align-items: center; justify-content: center; }
+.seat-slot--n { grid-area: n; }
+.seat-slot--w { grid-area: w; }
+.seat-slot--e { grid-area: e; }
+.seat-slot--s { grid-area: s; }
+.center { grid-area: c; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: calc(var(--u) * 0.8); min-height: calc(var(--u) * 18); }
+
+/* ---- Seat boxes -------------------------------------------------------- */
+.seat {
+  display: flex; flex-direction: column; align-items: center;
+  gap: calc(var(--u) * 0.3);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 0.9);
+  border-radius: var(--radius);
+  background: rgba(5, 6, 15, 0.40);
+  border: 1px solid transparent;
+  min-width: calc(var(--u) * 9);
+  text-align: center;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.seat--active {
+  border-color: var(--focus);
+  box-shadow: 0 0 calc(var(--u) * 1.6) rgba(108, 224, 255, 0.45);
+}
+.seat--declarer { background: rgba(108, 224, 255, 0.10); }
+.seat--dummy { background: rgba(244, 208, 63, 0.10); }
+
+.seat__name { font-size: 0.74em; font-weight: 700; }
+.seat__info { font-size: 0.72em; color: var(--focus); font-variant-numeric: tabular-nums; }
+.seat__last {
+  min-height: 1.2em; font-size: 0.82em; font-weight: 800; color: #f4d03f;
+}
+
+/* Dummy fan revealed face-up beneath the partner seat box. */
+.seat__dummy {
+  display: flex; flex-wrap: wrap; justify-content: center;
+  gap: calc(var(--u) * 0.25);
+  margin-top: calc(var(--u) * 0.4);
+  max-width: calc(var(--u) * 30);
+}
+.seat__dummy .card {
+  width: calc(var(--u) * 2.6); height: calc(var(--u) * 3.7);
+}
+.seat__dummy .card .card__rank { font-size: calc(var(--u) * 1.3); }
+.seat__dummy .card .card__suit { font-size: calc(var(--u) * 1.1); }
+
+/* ---- Centre: contract + current trick + running trick count ------------ */
+.contract {
+  font-size: 0.95em; font-weight: 800; letter-spacing: 0.03em;
+  color: var(--focus);
+  background: rgba(5, 6, 15, 0.55);
+  border: 1px solid var(--surface-2);
+  border-radius: 999px;
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 1.4);
+  text-align: center;
+}
+.trick {
+  position: relative;
+  width: calc(var(--u) * 16); height: calc(var(--u) * 16);
+}
+.trick__card { position: absolute; }
+.trick__card--n { top: 0; left: 50%; transform: translateX(-50%); }
+.trick__card--s { bottom: 0; left: 50%; transform: translateX(-50%); }
+.trick__card--w { left: 0; top: 50%; transform: translateY(-50%); }
+.trick__card--e { right: 0; top: 50%; transform: translateY(-50%); }
+.trick-count {
+  font-size: 0.82em; color: var(--text-dim); font-variant-numeric: tabular-nums;
+}
+
+/* ---- Cards ------------------------------------------------------------- */
+.card {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  width: calc(var(--u) * 4); height: calc(var(--u) * 5.6);
+  border-radius: calc(var(--u) * 0.6);
+  background: #f7f8fc; color: #14122b;
+  font-weight: 800; line-height: 1;
+  box-shadow: 0 calc(var(--u) * 0.3) calc(var(--u) * 0.7) rgba(0, 0, 0, 0.4);
+}
+.card__rank { font-size: calc(var(--u) * 1.9); }
+.card__suit { font-size: calc(var(--u) * 1.7); }
+.card--red { color: #d6224c; }
+.card--back {
+  background: repeating-linear-gradient(45deg, #1b2150, #1b2150 6px, #2b3478 6px, #2b3478 12px);
+  color: transparent; border: 1px solid #3a4690;
+}
+
+/* ---- Your hand (bottom) ------------------------------------------------- */
+.hand {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end;
+  gap: calc(var(--u) * 0.5);
+  padding: calc(var(--u) * 0.8) 0;
+  min-height: calc(var(--u) * 8);
+}
+.hand .card {
+  width: calc(var(--u) * 4.4); height: calc(var(--u) * 6.2);
+  cursor: pointer;
+  transition: transform 90ms ease, box-shadow 120ms ease;
+}
+.hand .card .card__rank { font-size: calc(var(--u) * 2.1); }
+.hand .card .card__suit { font-size: calc(var(--u) * 1.9); }
+
+/* Selectable / selected / illegal card states (play). */
+.card--selected {
+  transform: translateY(calc(var(--u) * -0.8));
+  box-shadow: 0 0 calc(var(--u) * 1.6) rgba(108, 224, 255, 0.7);
+  outline: calc(var(--u) * 0.3) solid var(--focus); outline-offset: -1px;
+}
+.card--disabled { opacity: 0.32; cursor: default; }
+.card--dummy-play { cursor: pointer; }
+
+/* ---- Auction history grid ---------------------------------------------- */
+.auction {
+  max-width: min(96vw, 480px); margin: calc(var(--u) * 1) auto 0;
+  background: rgba(5, 6, 15, 0.4);
+  border: 1px solid var(--surface-2); border-radius: var(--radius);
+  padding: calc(var(--u) * 0.6);
+}
+.auction__head, .auction__grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--u) * 0.3);
+}
+.auction__head {
+  font-size: 0.7em; font-weight: 800; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  text-align: center; margin-bottom: calc(var(--u) * 0.4);
+}
+.auction__cell {
+  text-align: center; font-size: 0.85em; font-weight: 700;
+  padding: calc(var(--u) * 0.2) 0;
+  background: rgba(255, 255, 255, 0.03); border-radius: calc(var(--u) * 0.4);
+  font-variant-numeric: tabular-nums;
+}
+.auction__cell--empty { background: transparent; }
+.auction__cell--dbl { color: #ff6b6b; }
+
+/* ---- Controls: bidding box / play hint --------------------------------- */
+.controls {
+  display: flex; justify-content: center; align-items: center;
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.4) 0;
+}
+.ctrl-msg { color: var(--text-dim); font-size: 0.9em; text-align: center; }
+
+.bidbox {
+  display: flex; flex-direction: column; align-items: center;
+  gap: calc(var(--u) * 0.6);
+  width: 100%; max-width: min(96vw, 560px);
+}
+.bidbox__row { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(var(--u) * 0.5); }
+.bidbox__help { font-size: 0.78em; color: var(--text-dim); text-align: center; }
+
+.bidbtn {
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  -webkit-user-select: none; user-select: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: calc(var(--u) * 5); min-height: calc(var(--u) * 5);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 0.9);
+  font-size: 1.05em; font-weight: 800; line-height: 1;
+  color: var(--text); background: var(--surface);
+  border: 1px solid var(--surface-2); border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 80ms ease, border-color 120ms ease, background 120ms ease;
+}
+.bidbtn:active { transform: scale(0.95); background: var(--surface-2); }
+.bidbtn--active {
+  border-color: var(--focus);
+  box-shadow: 0 0 calc(var(--u) * 1.3) rgba(108, 224, 255, 0.5);
+}
+.bidbtn--red { color: #ff7a90; }
+.bidbtn--pass { border-color: rgba(255, 255, 255, 0.25); }
+.bidbtn--double { border-color: rgba(255, 90, 90, 0.5); }
+.bidbtn--redouble { border-color: rgba(177, 75, 255, 0.6); }
+.bidbtn:disabled { opacity: 0.28; cursor: default; }
+
+/* ---- Responsive: portrait phones --------------------------------------- */
+@media (max-width: 640px), (orientation: portrait) {
+  .seat { min-width: calc(var(--u) * 7); padding: calc(var(--u) * 0.4); }
+  .seat__dummy .card { width: calc(var(--u) * 2.2); height: calc(var(--u) * 3.1); }
+  .trick { width: calc(var(--u) * 13); height: calc(var(--u) * 13); }
+  .bidbtn { min-width: calc(var(--u) * 4.4); flex: 0 1 auto; }
+  .hand .card { width: calc(var(--u) * 3.8); height: calc(var(--u) * 5.4); }
+}
