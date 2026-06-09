@@ -43,6 +43,7 @@ const INCLUDE = [
   "slots",
   "pinball",
   "block-blast",
+  "scrabble",
 ];
 
 const version = randomUUID();
