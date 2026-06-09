@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Space Console — Games</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./assets/css/base.css" />
+  <link rel="stylesheet" href="./assets/css/hub.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand__mark" aria-hidden="true"></span>
+        <span class="brand__name">Space&nbsp;Console</span>
+      </div>
+      <div class="topbar__hint">Pick a game</div>
+    </header>
+
+    <main class="hub">
+      <h1 class="hub__title">Games</h1>
+      <div class="hub__grid" id="grid" role="list">
+        <a class="tile" data-focusable data-href="./tetris/" role="listitem"
+           style="--art: linear-gradient(135deg, #4f8cff, #b14bff)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Tetris</div>
+            <div class="tile__tag">Puzzle · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./snake/" role="listitem"
+           style="--art: linear-gradient(135deg, #16a34a, #38e8a0)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Snake</div>
+            <div class="tile__tag">Arcade · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./sudoku/" role="listitem"
+           style="--art: linear-gradient(135deg, #0f2027, #2c5364)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Sudoku</div>
+            <div class="tile__tag">Puzzle · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./tic-tac-toe/" role="listitem"
+           style="--art: linear-gradient(135deg, #f59e0b, #ef4444)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Tic-Tac-Toe</div>
+            <div class="tile__tag">2 players · X &amp; O</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./chess/" role="listitem"
+           style="--art: linear-gradient(135deg, #1f1c2c, #928dab)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Chess</div>
+            <div class="tile__tag">Strategy · 1–2 players</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./poker/" role="listitem"
+           style="--art: linear-gradient(135deg, #134e2a, #2e8b57)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Texas Hold'em</div>
+            <div class="tile__tag">Poker · vs AI</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./video-poker/" role="listitem"
+           style="--art: linear-gradient(135deg, #d31027, #ea384d)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Video Poker</div>
+            <div class="tile__tag">Casino · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./uno/" role="listitem"
+           style="--art: linear-gradient(135deg, #f12711, #f5af19)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Uno</div>
+            <div class="tile__tag">Cards · vs AI</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./bridge/" role="listitem"
+           style="--art: linear-gradient(135deg, #1a2980, #26d0ce)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Bridge</div>
+            <div class="tile__tag">Cards · 4 players</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./blackjack/" role="listitem"
+           style="--art: linear-gradient(135deg, #0a3d1f, #0f2027)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Blackjack</div>
+            <div class="tile__tag">Casino · vs Dealer</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./solitaire/" role="listitem"
+           style="--art: linear-gradient(135deg, #355c7d, #c06c84)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Solitaire</div>
+            <div class="tile__tag">Klondike · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./checkers/" role="listitem"
+           style="--art: linear-gradient(135deg, #b21f1f, #1a1a1a)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Checkers</div>
+            <div class="tile__tag">Strategy · 1–2 players</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./yahtzee/" role="listitem"
+           style="--art: linear-gradient(135deg, #fc4a1a, #f7b733)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Yahtzee</div>
+            <div class="tile__tag">Dice · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./minesweeper/" role="listitem"
+           style="--art: linear-gradient(135deg, #283048, #859398)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Minesweeper</div>
+            <div class="tile__tag">Puzzle · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./slots/" role="listitem"
+           style="--art: linear-gradient(135deg, #7F00FF, #E100FF)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Slots</div>
+            <div class="tile__tag">Casino · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./pinball/" role="listitem"
+           style="--art: linear-gradient(135deg, #0b486b, #f56217)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Pinball</div>
+            <div class="tile__tag">Arcade · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./block-blast/" role="listitem"
+           style="--art: linear-gradient(135deg, #fc466b, #3f5efb)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Block Blast</div>
+            <div class="tile__tag">Puzzle · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./scrabble/" role="listitem"
+           style="--art: linear-gradient(135deg, #603813, #b29f94)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Scrabble</div>
+            <div class="tile__tag">Words · 1–2 players</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./fruit-ninja/" role="listitem"
+           style="--art: linear-gradient(135deg, #ff5f6d, #ffc371)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Fruit Ninja</div>
+            <div class="tile__tag">Action · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./flappy-bird/" role="listitem"
+           style="--art: linear-gradient(135deg, #56ccf2, #2f80ed)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Flappy Bird</div>
+            <div class="tile__tag">Arcade · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./candy-crush/" role="listitem"
+           style="--art: linear-gradient(135deg, #f857a6, #ff5858)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Candy Crush</div>
+            <div class="tile__tag">Match-3 · 1 player</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./tic-tac-boom/" role="listitem"
+           style="--art: linear-gradient(135deg, #ff512f, #dd2476)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Tic-Tac-Boom</div>
+            <div class="tile__tag">Party · 2–4 players</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./ludo/" role="listitem"
+           style="--art: linear-gradient(135deg, #fa709a, #fee140)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Ludo</div>
+            <div class="tile__tag">Board · vs AI</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./dominoes/" role="listitem"
+           style="--art: linear-gradient(135deg, #232526, #5b6e8c)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">Dominoes</div>
+            <div class="tile__tag">Tiles · vs AI</div>
+          </div>
+        </a>
+        <a class="tile" data-focusable data-href="./freecell/" role="listitem"
+           style="--art: linear-gradient(135deg, #134e5e, #71b280)">
+          <div class="tile__art" aria-hidden="true"></div>
+          <div class="tile__body">
+            <div class="tile__title">FreeCell</div>
+            <div class="tile__tag">Solitaire · 1 player</div>
+          </div>
+        </a>
+      </div>
+    </main>
+
+    <footer class="hintbar">
+      <span class="hint"><kbd class="key">↑↓←→</kbd> Navigate</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Play</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./assets/js/hub.js?v=77450023-12b6-42df-bd2d-07c0642eb6d4"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Chess — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Chess</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Choose a mode</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Board -->
+      <section class="board" aria-label="Chess board">
+        <!-- 8×8 grid of squares; populated by app.js -->
+        <div class="chessgrid" id="grid" role="grid" aria-label="Chess board"></div>
+
+        <!-- Mode-select / game-over overlay -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Chess</h1>
+            <p class="overlay__msg" id="overlayMsg">Choose a mode</p>
+            <!-- Mode menu: arrow/enter selectable and tappable -->
+            <div class="menu" id="menu" role="menu" aria-label="Game mode">
+              <button class="menu__item" id="modeTwo" type="button" role="menuitem" data-touch-ignore>2 Players (hot-seat)</button>
+              <button class="menu__item" id="modeAI" type="button" role="menuitem" data-touch-ignore>vs Computer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Promotion chooser (hidden until a pawn reaches the last rank) -->
+        <div class="overlay overlay--hidden" id="promo">
+          <div class="overlay__card">
+            <h1 class="overlay__title">Promote</h1>
+            <p class="overlay__msg">Pick a piece</p>
+            <div class="promo__row" id="promoRow"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side panel: move info -->
+      <aside class="panel" aria-label="Game info">
+        <dl class="scoreboard">
+          <div class="score"><dt>Turn</dt><dd id="turnLabel">—</dd></div>
+          <div class="score"><dt>Mode</dt><dd id="modeLabel">—</dd></div>
+          <div class="score"><dt>Moves</dt><dd id="moveCount">0</dd></div>
+        </dl>
+      </aside>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">↑↓←→</kbd> Move cursor</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Select · Move</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=77450023-12b6-42df-bd2d-07c0642eb6d4"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "Space Console Games",
+  "short_name": "Games",
+  "description": "A collection of zero-build games for the Space Console — Tetris, Snake, Sudoku, Tic-Tac-Toe.",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#05060f",
+  "theme_color": "#05060f",
+  "icons": [
+    {
+      "src": "./assets/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
