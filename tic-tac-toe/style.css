@@ -36,6 +36,10 @@
   font-weight: 800;
   line-height: 1;
   transition: background 120ms ease, box-shadow 120ms ease;
+  /* Cells own their taps: keep tap latency low and let the global gesture
+     layer ignore them (they also carry data-touch-ignore in app.js). */
+  touch-action: manipulation;
+  cursor: pointer;
 }
 
 /* X in the accent blue, O in a contrasting warm tone. */
@@ -52,4 +56,43 @@
 .cell--win {
   background: rgba(56, 232, 160, 0.18);
   box-shadow: inset 0 0 0 calc(var(--u) * 0.4) var(--good);
+}
+
+/* ---- Responsive: portrait phones ----------------------------------------
+   Stack the scoreboard below the board and size the square to fit the screen
+   in both axes, so it never overflows at 360–414px wide. */
+@media (max-width: 640px), (orientation: portrait) {
+  .stage {
+    grid-auto-flow: row;
+    grid-template-columns: auto;
+    align-content: center;
+    gap: calc(var(--u) * 1.6);
+  }
+
+  .board {
+    /* Square, capped by the shorter of available height/width. */
+    width: min(64vh, 92vw);
+    height: min(64vh, 92vw);
+    max-width: 92vw;
+    padding: calc(var(--u) * 1);
+  }
+
+  /* Scoreboard becomes a compact horizontal strip under the board. */
+  .panel {
+    min-width: 0;
+    width: min(64vh, 92vw);
+    max-width: 92vw;
+  }
+  .scoreboard {
+    flex-direction: row;
+    justify-content: center;
+    gap: calc(var(--u) * 1.2);
+  }
+  .score {
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(var(--u) * 0.2);
+    text-align: center;
+  }
 }

@@ -57,3 +57,10 @@
     0 calc(var(--u) * 2) calc(var(--u) * 4) rgba(0, 0, 0, 0.55);
   z-index: 2;
 }
+
+/* Phones: a single column that scrolls if the four tiles overflow the screen. */
+@media (max-width: 640px) {
+  .hub { justify-content: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .hub__grid { grid-template-columns: 1fr; gap: calc(var(--u) * 1.6); }
+  .tile { aspect-ratio: 16 / 9; }
+}

@@ -34,6 +34,12 @@
   /* Thin grid lines between every cell. */
   border: 1px solid rgba(255, 255, 255, 0.10);
   cursor: pointer;
+  /* Tap selects a cell directly (no double-tap zoom / text select); cells opt
+     out of the global swipe layer via data-touch-ignore in app.js. */
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
   transition: background 120ms ease, color 120ms ease;
 }
 
@@ -69,3 +75,46 @@
 /* Selection wins visually even when the cell is a given or in conflict. */
 .cell--selected.cell--given { color: var(--focus); }
 .cell--selected.cell--bad { box-shadow: inset 0 0 0 3px var(--bad); }
+
+/* ---- On-screen number pad (touch only) ---------------------------------- */
+/* A 3×3 grid of digits plus a wide clear key beneath the board. Inherits the
+   shared .touch-controls / .tbtn styling; we only size/lay it out here. */
+#pad {
+  margin-top: calc(var(--u) * 1.2);
+  width: min(82vh, 720px);
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: calc(var(--u) * 0.8);
+}
+#pad .pad-key {
+  min-width: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  font-size: clamp(1.2rem, 6vw, 1.8rem);
+}
+/* ⌫ spans the remaining columns on the second row so it stays easy to hit. */
+#pad .pad-key--clear {
+  grid-column: span 2;
+  aspect-ratio: auto;
+}
+
+/* ---- Portrait phones ----------------------------------------------------- */
+/* Fit the board and number pad on a phone without overflow: the grid sizes to
+   the smaller of the available height/width, and the pad tucks below it. */
+@media (max-width: 640px) {
+  /* .stage is a centered grid; tighten its gap so the board + pad both fit. */
+  .stage {
+    gap: calc(var(--u) * 1);
+    align-content: center;
+  }
+  .board--grid {
+    width: min(64vh, 94vw);
+    max-width: 94vw;
+  }
+  #pad {
+    width: min(64vh, 94vw);
+    max-width: 94vw;
+    margin-top: 0;
+  }
+}

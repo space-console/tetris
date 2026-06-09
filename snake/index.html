@@ -32,7 +32,7 @@
         <div class="overlay" id="overlay">
           <div class="overlay__card">
             <h1 class="overlay__title" id="overlayTitle">Snake</h1>
-            <p class="overlay__msg" id="overlayMsg">Press <kbd>Enter</kbd> to start</p>
+            <p class="overlay__msg" id="overlayMsg">Press <kbd>Enter</kbd> to start<br /><span class="touch-only">Swipe to turn · Tap to start</span></p>
           </div>
         </div>
       </section>
@@ -45,6 +45,9 @@
         </dl>
       </aside>
     </main>
+
+    <!-- On-screen D-pad: touch devices only (in addition to swipe). -->
+    <section class="touch-only" id="touchPad" aria-label="Direction pad"></section>
 
     <footer class="hintbar" id="hintbar">
       <span class="hint"><kbd class="key">←→</kbd> Turn</span>
