@@ -42,6 +42,7 @@ const INCLUDE = [
   "minesweeper",
   "slots",
   "pinball",
+  "block-blast",
 ];
 
 const version = randomUUID();
