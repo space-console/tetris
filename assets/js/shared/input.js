@@ -25,14 +25,28 @@ const REPEATING = new Set(["left", "right", "down"]);
 const DAS_DELAY = 150;
 const DAS_INTERVAL = 50;
 
+// Touch gesture thresholds (px / ms): a small, quick contact is a tap (→ enter);
+// a longer drag is a swipe (→ the dominant direction).
+const SWIPE_MIN = 24;
+const TAP_SLOP = 16;
+const TAP_TIME = 300;
+
+/** True on phones/tablets/touchscreens — used to reveal on-screen controls. */
+export function isTouchDevice() {
+  return "ontouchstart" in window || (navigator.maxTouchPoints || 0) > 0;
+}
+
 export class Input {
   constructor() {
     this.handlers = new Set();
     this._held = new Set();      // intents currently held (keyboard), for edge + repeat
     this._timers = new Map();    // intent -> {delay, interval} timer handles
     this._gpPrev = {};
+    this._touch = null;          // in-progress touch gesture
     this._onKey = this._onKey.bind(this);
     this._onKeyUp = this._onKeyUp.bind(this);
+    this._onTouchStart = this._onTouchStart.bind(this);
+    this._onTouchEnd = this._onTouchEnd.bind(this);
     this._poll = this._poll.bind(this);
   }
 
@@ -42,15 +56,53 @@ export class Input {
     return () => this.handlers.delete(handler);
   }
 
+  /**
+   * Inject an intent from external touch UI (on-screen buttons, tappable cells).
+   * Lets touch controls feed the exact same intent stream as keys/remote/gamepad.
+   */
+  emit(intent) {
+    this._emit(intent);
+  }
+
   start() {
     window.addEventListener("keydown", this._onKey);
     window.addEventListener("keyup", this._onKeyUp);
+    window.addEventListener("touchstart", this._onTouchStart, { passive: true });
+    window.addEventListener("touchend", this._onTouchEnd, { passive: true });
+    if (isTouchDevice()) document.documentElement.classList.add("touch");
     if ("getGamepads" in navigator) requestAnimationFrame(this._poll);
     return this;
   }
 
   _emit(intent) {
     for (const h of this.handlers) h(intent);
+  }
+
+  // ---- Touch: swipe → direction, tap → enter ------------------------------
+  // Gestures starting on an interactive element (button / link / tappable cell)
+  // are ignored here so those controls keep their own tap handling.
+  _onTouchStart(e) {
+    const t = e.changedTouches[0];
+    const el = e.target;
+    const ignore = !!(el.closest && el.closest("button, a, input, [data-touch-ignore]"));
+    this._touch = { x: t.clientX, y: t.clientY, time: now(), ignore };
+  }
+
+  _onTouchEnd(e) {
+    const s = this._touch;
+    this._touch = null;
+    if (!s || s.ignore) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s.x;
+    const dy = t.clientY - s.y;
+    const adx = Math.abs(dx);
+    const ady = Math.abs(dy);
+    if (adx < TAP_SLOP && ady < TAP_SLOP && now() - s.time < TAP_TIME) {
+      this._emit("enter");
+    } else if (Math.max(adx, ady) >= SWIPE_MIN) {
+      if (adx > ady) this._emit(dx > 0 ? "right" : "left");
+      else this._emit(dy > 0 ? "down" : "up");
+    }
   }
 
   // Begin a held intent: emit once, and if it repeats, start its DAS timers.
@@ -134,4 +186,7 @@ function pressed(pad, i) {
 }
 function axis(pad, i) {
   return pad.axes[i] || 0;
+}
+function now() {
+  return performance.now();
 }

@@ -4,9 +4,9 @@
 // game states (idle → playing → over). The engine owns all board logic; this
 // file is input + render only.
 
-import { Engine } from "./engine.js?v=ef042761-3773-4f34-a021-94514d3effa3";
-import { Input } from "../assets/js/shared/input.js?v=ef042761-3773-4f34-a021-94514d3effa3";
-import { Sound } from "../assets/js/shared/sound.js?v=ef042761-3773-4f34-a021-94514d3effa3";
+import { Engine } from "./engine.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { Sound } from "../assets/js/shared/sound.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
 
 const engine = new Engine();
 const input = new Input();
@@ -36,8 +36,23 @@ for (let i = 0; i < 9; i++) {
   const cell = document.createElement("div");
   cell.className = "cell";
   cell.setAttribute("role", "gridcell");
+  // Touch: cells handle their own taps, so keep the global gesture layer out.
+  cell.setAttribute("data-touch-ignore", "");
+  // Tapping a cell moves the cursor there and places a mark (same path as
+  // moving the cursor over it and pressing Enter). pointerdown covers
+  // mouse/touch/pen; click would also work but pointerdown feels snappier.
+  cell.addEventListener("pointerdown", () => tapCell(i));
   els.grid.appendChild(cell);
   cells.push(cell);
+}
+
+// Tap handler for a board cell: in play, jump the cursor to the tapped cell and
+// place; when the round is over, any tap starts the next round.
+function tapCell(i) {
+  if (state === "over" || state === "idle") { startRound(); return; }
+  if (state !== "playing") return;
+  cursor = i;
+  placeCursor();
 }
 
 // ---- Game-state transitions ----------------------------------------------
@@ -59,13 +74,25 @@ function endRound() {
     winLine = line;
     score[player] += 1;
     sound.levelUp();
-    showOverlay(`${player} wins!`, "Press <kbd>Enter</kbd> for next round");
+    showOverlay(`${player} wins!`, nextRoundMsg());
     setStatus(`${player} wins`);
   } else {
     score.draws += 1;
     sound.move();
-    showOverlay("Draw", "Press <kbd>Enter</kbd> for next round");
+    showOverlay("Draw", nextRoundMsg());
     setStatus("Draw");
+  }
+  draw();
+}
+
+// Place the current player's mark at the cursor, then advance the round. Shared
+// by the Enter intent and by tapping a cell, so both behave identically.
+function placeCursor() {
+  if (state !== "playing") return;
+  if (engine.place(cursor)) {
+    sound.lock();
+    // A placement may end the round (a win or a full-board draw).
+    if (engine.winner().player || engine.isDraw()) { endRound(); return; }
   }
   draw();
 }
@@ -80,12 +107,8 @@ input.on((intent) => {
       case "up": cursor = (cursor + 6) % 9; break;
       case "down": cursor = (cursor + 3) % 9; break;
       case "enter":
-        if (engine.place(cursor)) {
-          sound.lock();
-          // A placement may end the round (a win or a full-board draw).
-          if (engine.winner().player || engine.isDraw()) { endRound(); return; }
-        }
-        break;
+        placeCursor();
+        return;
       case "back": location.href = "../"; return;
     }
     draw();
@@ -116,6 +139,15 @@ function draw() {
   }
 
   if (state === "playing") setStatus(`${engine.current}'s turn`);
+}
+
+// ---- Copy helpers (touch vs keyboard) -------------------------------------
+// On touch devices the prompts speak taps; otherwise they speak keys.
+function startMsg() {
+  return isTouchDevice() ? "Tap a square to start" : "Press <kbd>Enter</kbd> to start";
+}
+function nextRoundMsg() {
+  return isTouchDevice() ? "Tap to play again" : "Press <kbd>Enter</kbd> for next round";
 }
 
 // ---- Overlay helpers ------------------------------------------------------
@@ -149,7 +181,8 @@ function boot() {
     if (e.key === "m" || e.key === "M") toggleMute();
   });
   draw();             // render the empty board behind the start overlay
-  showOverlay("Tic-Tac-Toe", "Press <kbd>Enter</kbd> to start");
+  setStatus(isTouchDevice() ? "Tap a square to start" : "Press Enter to start");
+  showOverlay("Tic-Tac-Toe", startMsg());
 }
 
 boot();

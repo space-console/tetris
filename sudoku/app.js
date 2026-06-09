@@ -4,9 +4,10 @@
 // conflict), and shows a win overlay. The engine owns all game logic; this file
 // is input + render only.
 
-import { Engine, N } from "./engine.js?v=ef042761-3773-4f34-a021-94514d3effa3";
-import { Input } from "../assets/js/shared/input.js?v=ef042761-3773-4f34-a021-94514d3effa3";
-import { Sound } from "../assets/js/shared/sound.js?v=ef042761-3773-4f34-a021-94514d3effa3";
+import { Engine, N } from "./engine.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { makeButton } from "../assets/js/shared/touch.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { Sound } from "../assets/js/shared/sound.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
 
 const engine = new Engine();
 const input = new Input();
@@ -19,6 +20,7 @@ const els = {
   overlayTitle: document.getElementById("overlayTitle"),
   overlayMsg: document.getElementById("overlayMsg"),
   mute: document.getElementById("mute"),
+  pad: document.getElementById("pad"),
 };
 
 // playing | solved
@@ -37,14 +39,52 @@ function buildGrid() {
       const cell = document.createElement("div");
       cell.className = "cell";
       cell.setAttribute("role", "gridcell");
-      // Clicking a cell selects it — a mouse convenience alongside the D-pad.
-      cell.addEventListener("click", () => {
+      // Cells handle their own tap/click selection, so keep them out of the
+      // global swipe/tap gesture layer in input.js.
+      cell.setAttribute("data-touch-ignore", "");
+      // Tapping/clicking a cell selects it — a touch/mouse convenience alongside
+      // the D-pad. pointerdown covers touch, mouse, and pen in one listener.
+      cell.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        sound.resume();   // first interaction unlocks audio (autoplay policy)
         select(r, c);
       });
       els.grid.appendChild(cell);
       cells[r][c] = cell;
     }
   }
+}
+
+// ---- On-screen number pad (touch only) ------------------------------------
+// Tap a cell to select it, then tap a digit to fill it (or ⌫ to clear).
+// Digits are values, not directional intents, so we drive the engine directly
+// via setSelected() rather than input.emit().
+function buildPad() {
+  els.pad.innerHTML = "";
+  for (let n = 1; n <= N; n++) {
+    els.pad.appendChild(
+      makeButton(String(n), () => setSelected(n), {
+        ariaLabel: "Enter " + n,
+        className: "pad-key",
+      })
+    );
+  }
+  els.pad.appendChild(
+    makeButton("⌫", () => setSelected(0), {
+      ariaLabel: "Clear cell",
+      className: "pad-key pad-key--clear",
+    })
+  );
+}
+
+// Set the selected cell to val (0 clears). No-op while solved or when the
+// selection is empty/a given. Reuses the same edit path as keyboard entry so
+// conflict highlighting and the solved check stay identical.
+function setSelected(val) {
+  sound.resume();
+  if (state !== "playing") return;
+  if (engine.isGiven(sel.r, sel.c)) return;
+  edit(() => engine.setCell(sel.r, sel.c, val));
 }
 
 // ---- Game-state transitions ----------------------------------------------
@@ -61,7 +101,10 @@ function win() {
   state = "solved";
   sound.levelUp();
   sound.start();
-  showOverlay("Solved!", "Press <kbd>Enter</kbd> for a new puzzle");
+  const msg = isTouchDevice()
+    ? "Tap anywhere for a new puzzle"
+    : "Press <kbd>Enter</kbd> for a new puzzle";
+  showOverlay("Solved!", msg);
 }
 
 // First non-given cell (top-left scan), falling back to 0,0.
@@ -135,9 +178,13 @@ function render() {
     }
   }
   const left = engine.remaining();
-  els.status.textContent = state === "solved"
-    ? "Solved! Press Enter for a new puzzle"
-    : `${left} cell${left === 1 ? "" : "s"} left`;
+  if (state === "solved") {
+    els.status.textContent = isTouchDevice()
+      ? "Solved! Tap for a new puzzle"
+      : "Solved! Press Enter for a new puzzle";
+  } else {
+    els.status.textContent = `${left} cell${left === 1 ? "" : "s"} left`;
+  }
 }
 
 // ---- Overlay helpers ------------------------------------------------------
@@ -175,6 +222,7 @@ function onKeyEntry(e) {
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   buildGrid();
+  buildPad();
   newGame();
   input.start();
   els.mute.addEventListener("click", toggleMute);

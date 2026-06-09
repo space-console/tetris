@@ -20,7 +20,7 @@
           <span class="brand__name">Sudoku</span>
         </a>
       </div>
-      <div class="topbar__hint" id="status" aria-live="polite">Fill every row, column and box with 1–9</div>
+      <div class="topbar__hint" id="status" aria-live="polite">Fill every row, column and box with 1–9. Tap a cell, then a number.</div>
       <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
     </header>
 
@@ -36,6 +36,9 @@
           </div>
         </div>
       </section>
+
+      <!-- On-screen number pad (touch only): tap a cell, then tap a digit. -->
+      <div class="touch-only touch-controls" id="pad" aria-label="Number pad"></div>
     </main>
 
     <footer class="hintbar" id="hintbar">
@@ -48,6 +51,6 @@
     </footer>
   </div>
 
-  <script type="module" src="./app.js?v=ef042761-3773-4f34-a021-94514d3effa3"></script>
+  <script type="module" src="./app.js?v=3083727f-326c-45b0-808b-122c54fd89b9"></script>
 </body>
 </html>

@@ -4,9 +4,10 @@
 // (idle → playing → paused → over). The engine owns all game logic; this file
 // is input + render only.
 
-import { Engine, COLS, ROWS } from "./engine.js?v=ef042761-3773-4f34-a021-94514d3effa3";
-import { Input } from "../assets/js/shared/input.js?v=ef042761-3773-4f34-a021-94514d3effa3";
-import { Sound } from "../assets/js/shared/sound.js?v=ef042761-3773-4f34-a021-94514d3effa3";
+import { Engine, COLS, ROWS } from "./engine.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { Input } from "../assets/js/shared/input.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { makeButton } from "../assets/js/shared/touch.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { Sound } from "../assets/js/shared/sound.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
 
 // Palette: the head is brighter than the body so the heading reads at a glance.
 const HEAD = "#7cffc4";
@@ -33,6 +34,7 @@ const els = {
   overlayTitle: document.getElementById("overlayTitle"),
   overlayMsg: document.getElementById("overlayMsg"),
   mute: document.getElementById("mute"),
+  touchPad: document.getElementById("touchPad"),
 };
 
 // idle | playing | paused | over
@@ -57,7 +59,7 @@ function startGame() {
 function pause() {
   if (state !== "playing") return;
   state = "paused";
-  showOverlay("Paused", "<kbd>Enter</kbd> resume · <kbd>Back</kbd> menu");
+  showOverlay("Paused", "<kbd>Enter</kbd> resume · <kbd>Back</kbd> menu<br><span class=\"touch-only\">Tap to resume</span>");
   setStatus("Paused");
 }
 
@@ -75,7 +77,7 @@ function gameOver() {
     best = engine.score;
     saveBest(best);
   }
-  showOverlay("Game Over", `Score ${engine.score} · Press <kbd>Enter</kbd> to play again`);
+  showOverlay("Game Over", `Score ${engine.score} · Press <kbd>Enter</kbd> to play again<br><span class="touch-only">Tap to play again</span>`);
   setStatus("Game over");
 }
 
@@ -234,15 +236,36 @@ function toggleMute() {
   renderMute();
 }
 
+// ---- On-screen D-pad (touch only) -----------------------------------------
+// A plus-shaped cross of buttons that emit the same directional intents as
+// swipes / keys, for players who prefer buttons over gestures.
+function buildTouchPad() {
+  const dirs = [
+    { label: "▲", intent: "up", cls: "dpad__up", aria: "Up" },
+    { label: "◀", intent: "left", cls: "dpad__left", aria: "Left" },
+    { label: "▶", intent: "right", cls: "dpad__right", aria: "Right" },
+    { label: "▼", intent: "down", cls: "dpad__down", aria: "Down" },
+  ];
+  for (const d of dirs) {
+    els.touchPad.appendChild(
+      makeButton(d.label, () => input.emit(d.intent), {
+        ariaLabel: d.aria,
+        className: "dpad__btn " + d.cls,
+      })
+    );
+  }
+}
+
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+  buildTouchPad();
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => {
     if (e.key === "m" || e.key === "M") toggleMute();
   });
   draw();             // render the starting board behind the start overlay
-  showOverlay("Snake", "Press <kbd>Enter</kbd> to start");
+  showOverlay("Snake", "Press <kbd>Enter</kbd> to start<br><span class=\"touch-only\">Swipe to turn · Tap to start</span>");
   requestAnimationFrame(loop);
 }
 

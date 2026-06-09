@@ -4,9 +4,10 @@
 // (idle → playing → paused → over). The engine owns all game logic; this file
 // is input + render only.
 
-import { Engine, COLS, ROWS } from "./engine.js?v=ef042761-3773-4f34-a021-94514d3effa3";
-import { Input } from "../assets/js/shared/input.js?v=ef042761-3773-4f34-a021-94514d3effa3";
-import { Sound } from "../assets/js/shared/sound.js?v=ef042761-3773-4f34-a021-94514d3effa3";
+import { Engine, COLS, ROWS } from "./engine.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { Input } from "../assets/js/shared/input.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { mountButtons } from "../assets/js/shared/touch.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
+import { Sound } from "../assets/js/shared/sound.js?v=3083727f-326c-45b0-808b-122c54fd89b9";
 
 // Colours indexed by the engine's cell ids (1..7 = I O T S Z J L).
 const COLORS = [
@@ -43,6 +44,7 @@ const els = {
   overlayTitle: document.getElementById("overlayTitle"),
   overlayMsg: document.getElementById("overlayMsg"),
   mute: document.getElementById("mute"),
+  touchControls: document.getElementById("touchControls"),
 };
 
 // idle | playing | paused | over
@@ -68,7 +70,7 @@ function startGame() {
 function pause() {
   if (state !== "playing") return;
   state = "paused";
-  showOverlay("Paused", "<kbd>Enter</kbd> resume · <kbd>Back</kbd> menu");
+  showOverlay("Paused", "Tap or <kbd>Enter</kbd> resume · <kbd>Back</kbd> menu");
   setStatus("Paused");
 }
 
@@ -82,7 +84,7 @@ function resume() {
 
 function gameOver() {
   state = "over";
-  showOverlay("Game Over", `Score ${engine.score} · Press <kbd>Enter</kbd> to play again`);
+  showOverlay("Game Over", `Score ${engine.score} · Tap to play again`);
   setStatus("Game over");
 }
 
@@ -306,12 +308,24 @@ function toggleMute() {
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+
+  // On-screen control pad (shown only on touch devices). Each button feeds the
+  // same intent stream as the keys via input.emit, so gameplay logic is shared.
+  mountButtons(els.touchControls, input, [
+    { label: "◀", intent: "left", hold: true, ariaLabel: "Move left" },
+    { label: "⟳", intent: "up", ariaLabel: "Rotate" },
+    { label: "▶", intent: "right", hold: true, ariaLabel: "Move right" },
+    { label: "▼", intent: "down", hold: true, ariaLabel: "Soft drop" },
+    { label: "⤓", intent: "enter", ariaLabel: "Hard drop" },
+    { label: "⏸", intent: "back", ariaLabel: "Pause / menu" },
+  ]);
+
   els.mute.addEventListener("click", toggleMute);
   window.addEventListener("keydown", (e) => {
     if (e.key === "m" || e.key === "M") toggleMute();
   });
   draw();             // render the empty board behind the start overlay
-  showOverlay("Tetris", "Press <kbd>Enter</kbd> to start");
+  showOverlay("Tetris", "Tap or press <kbd>Enter</kbd> to start");
   requestAnimationFrame(loop);
 }
 
