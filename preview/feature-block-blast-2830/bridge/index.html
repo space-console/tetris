@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Contract Bridge — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Contract Bridge</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Press Enter to deal</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Bridge table: partner (North) top, opponents (W/E) sides, you (South)
+           bottom; the current trick + contract sit in the centre. -->
+      <section class="table" aria-label="Bridge table">
+        <div class="seat-slot seat-slot--n" id="seatN" aria-label="North (partner)"></div>
+        <div class="seat-slot seat-slot--w" id="seatW" aria-label="West"></div>
+
+        <div class="center" id="center">
+          <div class="contract" id="contract" aria-live="polite"></div>
+          <div class="trick" id="trick" aria-label="Current trick"></div>
+          <div class="trick-count" id="trickCount" aria-live="polite"></div>
+        </div>
+
+        <div class="seat-slot seat-slot--e" id="seatE" aria-label="East"></div>
+        <div class="seat-slot seat-slot--s" id="seatS" aria-label="South (you)"></div>
+
+        <!-- Overlay for start / result / passed-out messaging -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Contract Bridge</h1>
+            <p class="overlay__msg" id="overlayMsg">Tap or press <kbd>Enter</kbd> to deal</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Auction history (visible during/after the auction). -->
+      <section class="auction" id="auction" aria-label="Auction history" hidden>
+        <div class="auction__head">
+          <span>South</span><span>West</span><span>North</span><span>East</span>
+        </div>
+        <div class="auction__grid" id="auctionGrid"></div>
+      </section>
+    </main>
+
+    <!-- Your hand: always visible at the bottom, sorted by suit. -->
+    <section class="hand" id="hand" aria-label="Your hand"></section>
+
+    <!-- Always-visible control area: bidding box during the auction, play hints
+         during the play. -->
+    <section class="controls" id="controls" aria-label="Your controls"></section>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">←→</kbd> Move</span>
+      <span class="hint"><kbd class="key">↑↓</kbd> Bid level / strain</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Confirm</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=395f3468-e6a4-4fbf-a5cd-a0b79ec9cb29"></script>
+</body>
+</html>
