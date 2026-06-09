@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Yahtzee — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Yahtzee</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Press Enter to roll</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <section class="table" aria-label="Yahtzee table">
+        <!-- Dice tray: five dice (built by app.js), then the roll control. -->
+        <div class="tray">
+          <div class="dice" id="dice" role="group" aria-label="Dice"></div>
+          <div class="tray__controls" id="controls" aria-label="Controls"></div>
+          <p class="tray__rolls"><span id="rollsLabel">Roll 0 · 3 rolls left</span></p>
+        </div>
+
+        <!-- Scorecard: rows are filled in by app.js; unused rows preview. -->
+        <table class="card" aria-label="Scorecard">
+          <tbody id="cardBody"></tbody>
+        </table>
+
+        <!-- Overlay for start / game-over (grand total) messaging. -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Yahtzee</h1>
+            <p class="overlay__msg" id="overlayMsg">Press <kbd>Enter</kbd> to roll</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">Enter</kbd>/<kbd class="key">R</kbd> Roll</span>
+      <span class="hint"><kbd class="key">←→</kbd> Pick die</span>
+      <span class="hint"><kbd class="key">↑</kbd> Hold die</span>
+      <span class="hint"><kbd class="key">Tab</kbd> Dice ⇄ Card</span>
+      <span class="hint"><kbd class="key">↑↓</kbd> Pick category</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Score</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=8da4925f-0672-4ddd-8d28-35a61b56ed69"></script>
+</body>
+</html>

@@ -21,9 +21,9 @@ import {
   VALUE_GLYPH,
   PLAYER_NAMES,
   cardName,
-} from "./engine.js?v=c2719be3-fd28-4fc9-9ffe-b694a075103c";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=c2719be3-fd28-4fc9-9ffe-b694a075103c";
-import { Sound } from "../assets/js/shared/sound.js?v=c2719be3-fd28-4fc9-9ffe-b694a075103c";
+} from "./engine.js?v=8da4925f-0672-4ddd-8d28-35a61b56ed69";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=8da4925f-0672-4ddd-8d28-35a61b56ed69";
+import { Sound } from "../assets/js/shared/sound.js?v=8da4925f-0672-4ddd-8d28-35a61b56ed69";
 
 const engine = new Engine();
 const input = new Input();
