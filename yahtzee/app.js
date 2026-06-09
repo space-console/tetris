@@ -9,10 +9,10 @@ import {
   Engine,
   CATEGORIES,
   UPPER_BONUS_THRESHOLD,
-} from "./engine.js?v=5abd3d81-c3ba-4254-baa2-b9a34a23722d";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=5abd3d81-c3ba-4254-baa2-b9a34a23722d";
-import { mountButtons } from "../assets/js/shared/touch.js?v=5abd3d81-c3ba-4254-baa2-b9a34a23722d";
-import { Sound } from "../assets/js/shared/sound.js?v=5abd3d81-c3ba-4254-baa2-b9a34a23722d";
+} from "./engine.js?v=12c53ba5-6281-4ec6-8cac-81eedda056d1";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=12c53ba5-6281-4ec6-8cac-81eedda056d1";
+import { mountButtons } from "../assets/js/shared/touch.js?v=12c53ba5-6281-4ec6-8cac-81eedda056d1";
+import { Sound } from "../assets/js/shared/sound.js?v=12c53ba5-6281-4ec6-8cac-81eedda056d1";
 
 const engine = new Engine();
 const input = new Input();
