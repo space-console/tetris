@@ -4,10 +4,10 @@
 // conflict), and shows a win overlay. The engine owns all game logic; this file
 // is input + render only.
 
-import { Engine, N } from "./engine.js?v=12c53ba5-6281-4ec6-8cac-81eedda056d1";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=12c53ba5-6281-4ec6-8cac-81eedda056d1";
-import { makeButton } from "../assets/js/shared/touch.js?v=12c53ba5-6281-4ec6-8cac-81eedda056d1";
-import { Sound } from "../assets/js/shared/sound.js?v=12c53ba5-6281-4ec6-8cac-81eedda056d1";
+import { Engine, N } from "./engine.js?v=a7ad4417-db97-401f-8640-bbe7a585894c";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=a7ad4417-db97-401f-8640-bbe7a585894c";
+import { makeButton } from "../assets/js/shared/touch.js?v=a7ad4417-db97-401f-8640-bbe7a585894c";
+import { Sound } from "../assets/js/shared/sound.js?v=a7ad4417-db97-401f-8640-bbe7a585894c";
 
 const engine = new Engine();
 const input = new Input();
