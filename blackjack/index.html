@@ -5,7 +5,7 @@
   <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#05060f" />
-  <title>Video Poker — Space Console</title>
+  <title>Blackjack — Space Console</title>
   <link rel="manifest" href="../manifest.json" />
   <link rel="stylesheet" href="../assets/css/base.css" />
   <link rel="stylesheet" href="./style.css" />
@@ -17,29 +17,38 @@
       <div class="brand">
         <a href="../" aria-label="Back to games">
           <span class="brand__mark" aria-hidden="true"></span>
-          <span class="brand__name">Video Poker</span>
+          <span class="brand__name">Blackjack</span>
         </a>
       </div>
-      <div class="topbar__hint" id="status" aria-live="polite">Jacks or Better</div>
+      <div class="topbar__hint" id="status" aria-live="polite">Dealer stands on 17 · BJ pays 3:2</div>
       <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
     </header>
 
     <main class="stage">
-      <section class="table" aria-label="Video poker table">
-        <!-- Paytable: rows are filled in by app.js; the hit row highlights. -->
-        <table class="paytable" id="paytable" aria-label="Pay table">
-          <tbody id="paytableBody"></tbody>
-        </table>
+      <section class="table" aria-label="Blackjack table">
+        <!-- Dealer row: label + total + cards (hole card hidden until reveal). -->
+        <div class="seat seat--dealer">
+          <div class="seat__head">
+            <span class="seat__label">Dealer</span>
+            <span class="seat__total" id="dealerTotal" aria-live="polite">—</span>
+          </div>
+          <div class="hand" id="dealerHand" role="group" aria-label="Dealer hand"></div>
+        </div>
 
-        <!-- The five-card hand; cards are built once by app.js. -->
-        <div class="hand" id="hand" role="group" aria-label="Your hand"></div>
+        <!-- Player row: one or two hands (after a split). -->
+        <div class="seat seat--player">
+          <div class="seat__head">
+            <span class="seat__label">You</span>
+            <span class="seat__total" id="playerTotal" aria-live="polite">—</span>
+          </div>
+          <div class="hands" id="playerHands" role="group" aria-label="Your hand"></div>
+        </div>
 
-        <!-- Scoreboard: credits / bet / last win / hand. -->
-        <dl class="scoreboard vp-scoreboard">
+        <!-- Scoreboard: credits / bet / last result. -->
+        <dl class="scoreboard bj-scoreboard">
           <div class="score"><dt>Credits</dt><dd id="credits">100</dd></div>
-          <div class="score"><dt>Bet</dt><dd id="bet">1</dd></div>
-          <div class="score"><dt>Win</dt><dd id="win">0</dd></div>
-          <div class="score vp-score--hand"><dt>Hand</dt><dd id="handName">—</dd></div>
+          <div class="score"><dt>Bet</dt><dd id="bet">5</dd></div>
+          <div class="score bj-score--result"><dt>Result</dt><dd id="result">—</dd></div>
         </dl>
 
         <!-- Always-visible primary controls (mouse, touch, and remote). -->
@@ -48,7 +57,7 @@
         <!-- Overlay for start / game-over messaging. -->
         <div class="overlay" id="overlay">
           <div class="overlay__card">
-            <h1 class="overlay__title" id="overlayTitle">Video Poker</h1>
+            <h1 class="overlay__title" id="overlayTitle">Blackjack</h1>
             <p class="overlay__msg" id="overlayMsg">Press <kbd>Enter</kbd> to deal</p>
           </div>
         </div>
@@ -56,11 +65,12 @@
     </main>
 
     <footer class="hintbar" id="hintbar">
-      <span class="hint"><kbd class="key">←→</kbd> Pick card</span>
-      <span class="hint"><kbd class="key">↑</kbd> Hold</span>
-      <span class="hint"><kbd class="key">Enter</kbd> Deal · Draw</span>
-      <span class="hint"><kbd class="key">B</kbd> Bet One</span>
-      <span class="hint"><kbd class="key">N</kbd> Bet Max</span>
+      <span class="hint"><kbd class="key">H</kbd> Hit</span>
+      <span class="hint"><kbd class="key">S</kbd> Stand</span>
+      <span class="hint"><kbd class="key">D</kbd> Double</span>
+      <span class="hint"><kbd class="key">P</kbd> Split</span>
+      <span class="hint"><kbd class="key">B</kbd> Bet</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Deal</span>
       <span class="hint"><kbd class="key">Back</kbd> Menu</span>
       <span class="hint"><kbd class="key">M</kbd> Mute</span>
     </footer>
