@@ -1,0 +1,187 @@
+/* Blackjack-specific layout. Shared chrome (tokens, topbar, overlay,
+   scoreboard, hintbar, .tbtn) lives in ../assets/css/base.css. */
+
+.stage {
+  display: grid;
+  place-items: center;
+  padding: calc(var(--u) * 1);
+}
+
+/* The table stacks: dealer seat, player seat, scoreboard, controls. Capped to a
+   comfortable column so it reads well on TV and never overflows a phone. */
+.table {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1.6);
+  width: min(96vw, 760px);
+  padding: calc(var(--u) * 2);
+  background: rgba(8, 10, 24, 0.72);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0, 0, 0, 0.5);
+}
+
+/* ---- Seats (dealer / player rows) --------------------------------------- */
+.seat {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+}
+.seat__head {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 1);
+}
+.seat__label {
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim, #9aa3c4);
+  font-size: 0.85em;
+}
+.seat__total {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 1.15em;
+  color: var(--focus);
+}
+
+/* ---- Player hands wrapper (one, or two side-by-side after a split) ------- */
+.hands {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+  width: 100%;
+}
+.phand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 0.8);
+  border-radius: var(--radius);
+  border: 2px solid transparent;
+}
+/* The hand currently being played glows. */
+.phand--active {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 2px var(--focus);
+}
+.phand__tag {
+  font-size: 0.85em;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+/* Per-hand result tints. */
+.phand--win .phand__tag,
+.phand--blackjack .phand__tag { color: var(--good, #38e8a0); }
+.phand--lose .phand__tag,
+.phand--bust .phand__tag { color: var(--bad, #ff5d73); }
+.phand--push .phand__tag { color: var(--focus); }
+
+/* ---- A row of cards ----------------------------------------------------- */
+.hand {
+  display: flex;
+  justify-content: center;
+  gap: clamp(4px, 1.4vw, 12px);
+}
+
+.card {
+  position: relative;
+  flex: 0 0 auto;
+  width: clamp(46px, 14vw, 96px);
+  aspect-ratio: 5 / 7;
+  display: grid;
+  place-items: center;
+  background: #f6f7fb;
+  color: #10142b;
+  border: 2px solid #cfd4e6;
+  border-radius: calc(var(--u) * 1.1);
+  box-shadow: 0 calc(var(--u) * 0.6) calc(var(--u) * 1.4) rgba(0, 0, 0, 0.45);
+  user-select: none;
+}
+.card__rank {
+  font-size: clamp(1.2em, 5.4vw, 2.4em);
+  font-weight: 800;
+  line-height: 1;
+}
+.card__suit {
+  font-size: clamp(1em, 4.6vw, 2em);
+  line-height: 1;
+}
+/* Red suits (♥ ♦). */
+.card--red,
+.card--red .card__rank,
+.card--red .card__suit { color: #d12b3a; }
+
+/* The dealer's face-down hole card: a patterned back, no rank/suit. */
+.card--back {
+  background:
+    repeating-linear-gradient(45deg, #2b3570 0 8px, #1d2550 8px 16px);
+  border-color: #3a4690;
+}
+
+/* ---- Scoreboard strip --------------------------------------------------- */
+.bj-scoreboard {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.2);
+  width: 100%;
+}
+.bj-scoreboard .score {
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.2);
+  text-align: center;
+  min-width: calc(var(--u) * 7);
+}
+.bj-score--result dd { font-size: 1.05em; color: var(--good, #38e8a0); }
+
+/* ---- Primary controls (always visible) ---------------------------------- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.2);
+  width: 100%;
+}
+.ctl {
+  min-width: calc(var(--u) * 8);
+  font-size: 1em;
+}
+.ctl--primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+  font-weight: 800;
+  min-width: calc(var(--u) * 11);
+}
+.ctl--primary:active { transform: scale(0.96); }
+
+/* Disabled / illegal actions: dimmed and non-interactive. */
+.tbtn--off {
+  opacity: 0.4;
+  filter: saturate(0.4);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ---- Responsive: portrait phones ---------------------------------------- */
+@media (max-width: 640px), (orientation: portrait) {
+  .table {
+    width: 96vw;
+    padding: calc(var(--u) * 1.4);
+    gap: calc(var(--u) * 1.2);
+  }
+  .hands { gap: calc(var(--u) * 1.2); }
+  .hand { gap: clamp(3px, 1.2vw, 8px); }
+  .controls { gap: calc(var(--u) * 0.9); }
+  .ctl { min-width: calc(var(--u) * 6.5); }
+}
