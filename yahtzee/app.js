@@ -41,6 +41,35 @@ const PIP_LAYOUT = {
 };
 const ALL_POS = ["tl", "tc", "tr", "cl", "cc", "cr", "bl", "bc", "br"];
 
+// Cube rotation (degrees [rotateX, rotateY]) that brings each face to the front,
+// matching the face placement in style.css (1 front, 6 back, 2 right, 5 left,
+// 3 top, 4 bottom). Used to land a tumbling die on its rolled value.
+const DIE_ORIENT = {
+  1: [0, 0],
+  2: [0, -90],
+  3: [-90, 0],
+  4: [90, 0],
+  5: [0, 90],
+  6: [0, 180],
+};
+
+// "How to score" hints shown on the scorecard (mirrors the printed Yahtzee card).
+const HOW_TO = {
+  ones: "Count and add only 1s",
+  twos: "Count and add only 2s",
+  threes: "Count and add only 3s",
+  fours: "Count and add only 4s",
+  fives: "Count and add only 5s",
+  sixes: "Count and add only 6s",
+  threeKind: "Add total of all dice",
+  fourKind: "Add total of all dice",
+  fullHouse: "Score 25",
+  smallStraight: "Score 30",
+  largeStraight: "Score 40",
+  yahtzee: "Score 50",
+  chance: "Total of all 5 dice",
+};
+
 // ---- UI state -------------------------------------------------------------
 let started = false;       // has the first roll of the game happened?
 let focus = "dice";        // "dice" or "card" — which group the cursor lives in
@@ -49,7 +78,13 @@ let catCursor = 0;         // index into the OPEN categories the card cursor hov
 let rollBtn = null;        // the always-visible Roll button
 
 // ---- Build the dice (once) ------------------------------------------------
-const dieEls = [];
+// Each die is a 3D cube: a perspective scene (.die, the tappable button) holding
+// a .die-cube with six pip faces. Faces are static; a roll tumbles the cube to
+// land the rolled value toward the viewer.
+const dieEls = [];     // the .die scene buttons
+const cubeEls = [];    // the .die-cube inside each
+const dieSpin = [0, 0, 0, 0, 0]; // per-die full-turn counter so repeats still tumble
+
 function buildDice() {
   for (let i = 0; i < 5; i++) {
     const die = document.createElement("button");
@@ -58,13 +93,23 @@ function buildDice() {
     // Dice own their taps; keep the global gesture layer out of them.
     die.setAttribute("data-touch-ignore", "");
     die.setAttribute("aria-label", `Die ${i + 1}`);
-    // Nine pip slots; we toggle .pip--on per face when rendering.
-    for (const pos of ALL_POS) {
-      const pip = document.createElement("span");
-      pip.className = "pip";
-      pip.setAttribute("data-pos", pos);
-      die.appendChild(pip);
+
+    const cube = document.createElement("div");
+    cube.className = "die-cube";
+    for (let v = 1; v <= 6; v++) {
+      const face = document.createElement("div");
+      face.className = "die-face die-face--" + v;
+      const on = new Set(PIP_LAYOUT[v]);
+      for (const pos of ALL_POS) {
+        const pip = document.createElement("span");
+        pip.className = "pip" + (on.has(pos) ? " pip--on" : "");
+        pip.setAttribute("data-pos", pos);
+        face.appendChild(pip);
+      }
+      cube.appendChild(face);
     }
+    die.appendChild(cube);
+
     // pointerdown covers mouse/touch/pen and feels snappier than click.
     die.addEventListener("pointerdown", (e) => {
       e.preventDefault();
@@ -72,7 +117,29 @@ function buildDice() {
     });
     els.dice.appendChild(die);
     dieEls.push(die);
+    cubeEls.push(cube);
   }
+}
+
+// Orient die `i` to show `value`. When `animate`, add a full extra revolution so
+// the cube visibly tumbles (and lands on the value); otherwise snap silently.
+function setDieFace(i, value, animate) {
+  if (animate) dieSpin[i] += 1;
+  const [rx, ry] = DIE_ORIENT[value];
+  cubeEls[i].style.transform =
+    `rotateX(${rx + 360 * dieSpin[i]}deg) rotateY(${ry + 360 * dieSpin[i]}deg)`;
+}
+
+// Tumble the non-held dice to their freshly rolled values; held dice just hold.
+function animateRoll() {
+  for (let i = 0; i < 5; i++) {
+    setDieFace(i, engine.dice[i], !engine.held[i]);
+  }
+}
+
+// Snap every die to its current value with no animation (boot / new game).
+function syncDice() {
+  for (let i = 0; i < 5; i++) setDieFace(i, engine.dice[i], false);
 }
 
 // ---- Build the scorecard (once) -------------------------------------------
@@ -100,10 +167,29 @@ function appendSectionHeader(label) {
   const tr = document.createElement("tr");
   tr.className = "section-row";
   const th = document.createElement("th");
-  th.colSpan = 2;
   th.textContent = label;
-  tr.appendChild(th);
+  const how = document.createElement("th");
+  how.className = "section-row__how";
+  how.textContent = "How to score";
+  const val = document.createElement("th");
+  val.className = "section-row__score";
+  val.textContent = "Score";
+  tr.append(th, how, val);
   els.cardBody.appendChild(tr);
+}
+
+// A small printed-style die face (used as the upper-section row icon).
+function miniDie(face) {
+  const d = document.createElement("span");
+  d.className = "minidie";
+  const on = new Set(PIP_LAYOUT[face]);
+  for (const pos of ALL_POS) {
+    const pip = document.createElement("span");
+    pip.className = "minipip" + (on.has(pos) ? " minipip--on" : "");
+    pip.setAttribute("data-pos", pos);
+    d.appendChild(pip);
+  }
+  return d;
 }
 
 function appendCatRow(cat) {
@@ -113,8 +199,18 @@ function appendCatRow(cat) {
 
   const th = document.createElement("th");
   th.scope = "row";
-  th.textContent = cat.name;
+  th.className = "cat-row__name";
+  if (cat.section === "upper") th.appendChild(miniDie(cat.face));
+  const label = document.createElement("span");
+  label.className = "cat-row__label";
+  label.textContent = cat.name;
+  th.appendChild(label);
   tr.appendChild(th);
+
+  const how = document.createElement("td");
+  how.className = "cat-row__how";
+  how.textContent = HOW_TO[cat.key] || "";
+  tr.appendChild(how);
 
   const td = document.createElement("td");
   td.className = "cat-row__value";
@@ -136,6 +232,7 @@ function appendSubRow(id, label, assign, extra = "") {
   tr.className = ("sub-row " + extra).trim();
   const th = document.createElement("th");
   th.scope = "row";
+  th.colSpan = 2;
   th.textContent = label;
   const td = document.createElement("td");
   assign(td);
@@ -149,6 +246,7 @@ function appendTotalRow() {
   tr.className = "total-row";
   const th = document.createElement("th");
   th.scope = "row";
+  th.colSpan = 2;
   th.textContent = "Grand total";
   totalTd = document.createElement("td");
   tr.appendChild(th);
@@ -170,6 +268,7 @@ function rollAction() {
 
   engine.roll();
   sound.rotate();
+  animateRoll();          // tumble the cubes to their new faces
   // After a roll, default the focus to the dice so the player can hold.
   focus = "dice";
   hideOverlay();
@@ -242,6 +341,7 @@ function newGame() {
   focus = "dice";
   dieCursor = 0;
   catCursor = 0;
+  syncDice();          // reset the cubes to show the fresh dice (no tumble)
   hideOverlay();
   setStatus(isTouchDevice() ? "Tap Roll to start" : "Press Enter to roll");
   draw();
@@ -347,13 +447,11 @@ function drawDice() {
   // Dim the tray before the first roll of a turn.
   els.dice.classList.toggle("dice--idle", !engine.hasRolled);
 
+  // Faces are baked into the cubes; the rolled value is shown by orienting the
+  // cube (see animateRoll/syncDice). Here we only reflect hold/cursor state.
   for (let i = 0; i < 5; i++) {
     const el = dieEls[i];
     const face = engine.dice[i];
-    const on = new Set(PIP_LAYOUT[face]);
-    for (const pip of el.querySelectorAll(".pip")) {
-      pip.classList.toggle("pip--on", on.has(pip.getAttribute("data-pos")));
-    }
     const held = engine.hasRolled && engine.held[i];
     el.classList.toggle("die--held", held);
     el.classList.toggle(
@@ -467,6 +565,7 @@ function toggleMute() {
 function boot() {
   buildDice();
   buildCard();
+  syncDice();          // show the initial faces on the cubes
 
   // Always-visible primary control. The button is also the game-over restart
   // (it stays enabled to roll the first turn of the next game via newGame()).
