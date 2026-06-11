@@ -5,7 +5,7 @@
 // all game logic, move legality and the supermove math; this file is input +
 // render only.
 //
-// INTERACTION is tap-to-move (not drag — best for both touch and a TV remote):
+// INTERACTION is tap-to-move (best for both touch and a TV remote):
 //   • Tap a face-up card to SELECT it as the source. For a tableau card, the
 //     selection grabs that card plus the valid descending alternating-colour run
 //     beneath it.
@@ -13,6 +13,10 @@
 //     there if legal (multi-card tableau moves obey the supermove limit).
 //   • Tapping the same source again, or an illegal target, deselects.
 //   • Double-tap a card to auto-send it to a foundation if legal.
+//
+// MOUSE also supports DRAG-AND-DROP: press a card and drag it onto a destination;
+// the move resolves on release. A plain click (no movement) falls back to the
+// tap-to-move flow above. Drag is mouse-only so touch/pen can still scroll.
 //
 // KEYBOARD / REMOTE uses a cursor over 16 zones (left/right): the four free
 // cells, the four foundations, then the eight tableau columns. Up/down adjusts
@@ -27,10 +31,10 @@ import {
   FREE_COUNT,
   FOUNDATION_COUNT,
   TABLEAU_COUNT,
-} from "./engine.js?v=2f1a10a6-2493-4ae8-b2e2-30fc078e9638";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=2f1a10a6-2493-4ae8-b2e2-30fc078e9638";
-import { mountButtons } from "../assets/js/shared/touch.js?v=2f1a10a6-2493-4ae8-b2e2-30fc078e9638";
-import { Sound } from "../assets/js/shared/sound.js?v=2f1a10a6-2493-4ae8-b2e2-30fc078e9638";
+} from "./engine.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
+import { mountButtons } from "../assets/js/shared/touch.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
+import { Sound } from "../assets/js/shared/sound.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
 
 const engine = new Engine();
 const input = new Input();
@@ -69,6 +73,14 @@ let selection = null; // { type: "tableau"|"free"|"foundation", index, cardIndex
 let lastTap = { key: null, time: 0 }; // for double-tap-to-foundation detection
 const DOUBLE_TAP_MS = 320;
 
+// Mouse drag-and-drop state. A pointerdown "arms" a candidate; if the mouse then
+// moves past a small threshold it becomes a real drag (a floating ghost follows
+// the cursor and the drop is resolved on pointerup). Touch/pen never drag — they
+// keep the tap-to-move flow, so a finger can still scroll the board.
+let dragState = null;
+// { pointerId, pointerType, src, startX, startY, dragging, ghost, grabDX, grabDY }
+const DRAG_THRESHOLD_PX = 6;
+
 // ---- DOM construction (cards) --------------------------------------------
 // Build a single face-up card element. Every FreeCell card is face-up.
 function makeCardEl(card) {
@@ -100,7 +112,9 @@ function buildSlots() {
     slot.className = "pile pile--free";
     slot.setAttribute("data-touch-ignore", "");
     slot.setAttribute("aria-label", `Free cell ${i + 1}`);
-    slot.addEventListener("pointerdown", (e) => { e.preventDefault(); tapFree(i); });
+    slot.dataset.zone = "free";
+    slot.dataset.index = String(i);
+    slot.addEventListener("pointerdown", (e) => armPointer(e, { type: "free", index: i }));
     els.cells.appendChild(slot);
     cellEls.push(slot);
   }
@@ -109,7 +123,9 @@ function buildSlots() {
     slot.className = "pile pile--foundation";
     slot.setAttribute("data-touch-ignore", "");
     slot.setAttribute("aria-label", `Foundation ${i + 1}`);
-    slot.addEventListener("pointerdown", (e) => { e.preventDefault(); tapFoundation(i); });
+    slot.dataset.zone = "foundation";
+    slot.dataset.index = String(i);
+    slot.addEventListener("pointerdown", (e) => armPointer(e, { type: "foundation", index: i }));
     els.foundations.appendChild(slot);
     foundationEls.push(slot);
   }
@@ -333,6 +349,152 @@ input.on((intent) => {
   }
 });
 
+// ---- Mouse drag-and-drop --------------------------------------------------
+// Every source pointerdown lands here. We only record a candidate; whether it
+// turns into a drag (mouse) or a tap (anything, including a mouse click that
+// never moves) is decided later on move/up.
+function armPointer(e, src) {
+  e.preventDefault();
+  dragState = {
+    pointerId: e.pointerId,
+    pointerType: e.pointerType,
+    src,
+    srcEl: e.currentTarget,
+    startX: e.clientX,
+    startY: e.clientY,
+    dragging: false,
+    ghost: null,
+    grabDX: 0,
+    grabDY: 0,
+  };
+}
+
+// A source can be dragged only if it actually holds a movable card (a movable
+// run, for a tableau column). Empty slots/columns are place-only → tap path.
+function canDragSource(src) {
+  if (!src) return false;
+  if (src.type === "tableau") {
+    const col = engine.cols[src.index];
+    return col.length > 0 && src.cardIndex < col.length && engine.isValidRun(src.index, src.cardIndex);
+  }
+  if (src.type === "free") return engine.free[src.index] != null;
+  if (src.type === "foundation") return engine.foundations[src.index].length > 0;
+  return false;
+}
+
+// The cards that travel together for a given source (a run for tableau, else one).
+function movingCards(src) {
+  if (src.type === "tableau") return engine.cols[src.index].slice(src.cardIndex);
+  if (src.type === "free") return [engine.free[src.index]];
+  if (src.type === "foundation") {
+    const f = engine.foundations[src.index];
+    return [f[f.length - 1]];
+  }
+  return [];
+}
+
+// Set the move source as the current selection (mirrors the tap-to-select path).
+function selectSource(src) {
+  if (src.type === "tableau") {
+    selection = { type: "tableau", index: src.index, cardIndex: src.cardIndex };
+    cursorZone = FIRST_TABLEAU_ZONE + src.index;
+    cursorDepth = src.cardIndex;
+  } else if (src.type === "free") {
+    selection = { type: "free", index: src.index };
+    cursorZone = src.index;
+  } else if (src.type === "foundation") {
+    selection = { type: "foundation", index: src.index };
+    cursorZone = FREE_COUNT + src.index;
+  }
+}
+
+function beginDrag(e) {
+  dragState.dragging = true;
+  sound.resume();
+  clearSelection();
+  selectSource(dragState.src);
+
+  // Build a floating clone of the grabbed card(s).
+  const ghost = document.createElement("div");
+  ghost.className = "drag-ghost";
+  for (const card of movingCards(dragState.src)) ghost.appendChild(makeCardEl(card));
+  document.body.appendChild(ghost);
+  dragState.ghost = ghost;
+
+  // Offset so the ghost holds the same grab point under the cursor as the card
+  // did at pointerdown (use the original source element, still in the DOM here).
+  const rect = dragState.srcEl.getBoundingClientRect();
+  dragState.grabDX = dragState.startX - rect.left;
+  dragState.grabDY = dragState.startY - rect.top;
+
+  draw();        // shows target hints + dims the grabbed run
+  moveGhost(e);
+}
+
+function moveGhost(e) {
+  if (!dragState || !dragState.ghost) return;
+  const x = e.clientX - dragState.grabDX;
+  const y = e.clientY - dragState.grabDY;
+  dragState.ghost.style.transform = `translate(${x}px, ${y}px)`;
+}
+
+// Resolve which zone (if any) sits under a screen point. The ghost is
+// pointer-events:none, so it never masks the real drop target.
+function zoneFromPoint(x, y) {
+  let el = document.elementFromPoint(x, y);
+  el = el && el.closest("[data-zone]");
+  if (!el) return null;
+  return { type: el.dataset.zone, index: Number(el.dataset.index) };
+}
+
+function endDrag(d, e) {
+  if (d.ghost) d.ghost.remove();
+
+  const zone = zoneFromPoint(e.clientX, e.clientY);
+  if (zone) {
+    if (zone.type === "tableau") tryPlaceOnTableau(zone.index);
+    else if (zone.type === "foundation") tryPlaceOnFoundation(zone.index);
+    else if (zone.type === "free") tryPlaceOnFree(zone.index);
+  }
+  // Dropped on empty space, or an illegal/failed target: just let go.
+  if (selection) { clearSelection(); draw(); }
+}
+
+// A bare tap/click (no drag) replays the original tap-to-move handlers, so touch
+// and click-to-move keep working exactly as before, double-tap included.
+function fireTap(src) {
+  if (src.type === "free") tapFree(src.index);
+  else if (src.type === "foundation") tapFoundation(src.index);
+  else if (src.type === "tableau") tapTableau(src.index, src.cardIndex);
+}
+
+window.addEventListener("pointermove", (e) => {
+  if (!dragState || e.pointerId !== dragState.pointerId) return;
+  if (dragState.dragging) { moveGhost(e); return; }
+  // Mouse only — don't hijack touch/pen scrolling.
+  if (dragState.pointerType !== "mouse") return;
+  const dx = e.clientX - dragState.startX;
+  const dy = e.clientY - dragState.startY;
+  if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
+  if (!canDragSource(dragState.src)) return;
+  beginDrag(e);
+});
+
+window.addEventListener("pointerup", (e) => {
+  if (!dragState || e.pointerId !== dragState.pointerId) return;
+  const d = dragState;
+  dragState = null;
+  if (d.dragging) endDrag(d, e);
+  else fireTap(d.src);
+});
+
+window.addEventListener("pointercancel", (e) => {
+  if (!dragState || e.pointerId !== dragState.pointerId) return;
+  if (dragState.ghost) dragState.ghost.remove();
+  dragState = null;
+  if (selection) { clearSelection(); draw(); }
+});
+
 // ---- Rendering ------------------------------------------------------------
 function draw() {
   setStatusScore();
@@ -374,13 +536,15 @@ function draw() {
     colEl.className = "pile pile--tableau";
     colEl.setAttribute("data-touch-ignore", "");
     colEl.setAttribute("aria-label", `Tableau column ${p + 1}`);
+    colEl.dataset.zone = "tableau";
+    colEl.dataset.index = String(p);
     const col = engine.cols[p];
 
     if (col.length === 0) {
       colEl.classList.add("pile--empty");
       if (isCursor("tableau", p)) colEl.classList.add("pile--cursor");
       if (selection && legalTableauTarget(p)) colEl.classList.add("pile--target");
-      colEl.addEventListener("pointerdown", (e) => { e.preventDefault(); tapTableau(p, 0); });
+      colEl.addEventListener("pointerdown", (e) => armPointer(e, { type: "tableau", index: p, cardIndex: 0 }));
       els.tableau.appendChild(colEl);
       continue;
     }
@@ -397,7 +561,13 @@ function draw() {
       // Keyboard cursor ring on the targeted depth.
       const cursorHere = isCursor("tableau", p) && c === Math.min(cursorDepth, col.length - 1);
       el.classList.toggle("card--cursor", cursorHere);
-      el.addEventListener("pointerdown", (e) => { e.preventDefault(); tapTableau(p, c); });
+      // Mark the cards that would travel with this one (the run beneath) so a
+      // mouse drag can dim them.
+      if (dragState && dragState.dragging && dragState.src.type === "tableau" &&
+          dragState.src.index === p && c >= dragState.src.cardIndex) {
+        el.classList.add("card--dragging");
+      }
+      el.addEventListener("pointerdown", (e) => armPointer(e, { type: "tableau", index: p, cardIndex: c }));
       colEl.appendChild(el);
     });
     els.tableau.appendChild(colEl);

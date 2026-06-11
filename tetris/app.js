@@ -4,10 +4,10 @@
 // (idle → playing → paused → over). The engine owns all game logic; this file
 // is input + render only.
 
-import { Engine, COLS, ROWS } from "./engine.js?v=2f1a10a6-2493-4ae8-b2e2-30fc078e9638";
-import { Input } from "../assets/js/shared/input.js?v=2f1a10a6-2493-4ae8-b2e2-30fc078e9638";
-import { mountButtons } from "../assets/js/shared/touch.js?v=2f1a10a6-2493-4ae8-b2e2-30fc078e9638";
-import { Sound } from "../assets/js/shared/sound.js?v=2f1a10a6-2493-4ae8-b2e2-30fc078e9638";
+import { Engine, COLS, ROWS } from "./engine.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
+import { Input } from "../assets/js/shared/input.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
+import { mountButtons } from "../assets/js/shared/touch.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
+import { Sound } from "../assets/js/shared/sound.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
 
 // Colours indexed by the engine's cell ids (1..7 = I O T S Z J L).
 const COLORS = [
