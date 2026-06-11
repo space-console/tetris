@@ -14,10 +14,10 @@
 //     empty boneyard = BLOCKED.
 //   * Empty your hand → "domino!" win. Blocked → lower pip total wins (tie=draw).
 
-import { Engine, legalMoves, isDouble, handPips, tileId } from "./engine.js?v=0e1028e3-a8ea-4c79-87ba-b07d69c68b68";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=0e1028e3-a8ea-4c79-87ba-b07d69c68b68";
-import { mountButtons } from "../assets/js/shared/touch.js?v=0e1028e3-a8ea-4c79-87ba-b07d69c68b68";
-import { Sound } from "../assets/js/shared/sound.js?v=0e1028e3-a8ea-4c79-87ba-b07d69c68b68";
+import { Engine, legalMoves, isDouble, handPips, tileId } from "./engine.js?v=297692ec-9d04-48fc-b8ba-8d23c1efb13f";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=297692ec-9d04-48fc-b8ba-8d23c1efb13f";
+import { mountButtons } from "../assets/js/shared/touch.js?v=297692ec-9d04-48fc-b8ba-8d23c1efb13f";
+import { Sound } from "../assets/js/shared/sound.js?v=297692ec-9d04-48fc-b8ba-8d23c1efb13f";
 
 const engine = new Engine();
 const input = new Input();
