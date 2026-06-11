@@ -1,0 +1,251 @@
+/* Dominoes-specific layout. Shared chrome (tokens, topbar, overlay, scoreboard,
+   hintbar) lives in ../assets/css/base.css. Domino tiles are pure CSS: each tile
+   is two square halves, and each half draws 0..6 PIPS on a 3x3 grid (like the
+   faces of a die) — no image assets. */
+
+.stage {
+  display: grid;
+  place-items: center;
+  padding: calc(var(--u) * 1);
+  /* If a small viewport can't fit the whole board, let it scroll rather than
+     clip — never overlap. */
+  overflow-y: auto;
+}
+
+/* The board stacks: opponent strip, the chain, your hand, scoreboard, controls.
+   Capped to a comfortable column so it reads on TV and never overflows a phone.
+   NOTE: base.css gives `.board` a FIXED canvas height (min(82vh,860px)) +
+   overflow:hidden for canvas games. This is a flow-layout board, so we must
+   reset both — otherwise the flex rows are squeezed under the fixed height and
+   overlap each other. */
+.board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(var(--u) * 1.6);
+  width: min(96vw, 720px);
+  height: auto;            /* override base.css fixed canvas height */
+  max-height: none;
+  overflow: visible;       /* override base.css overflow:hidden */
+  padding: calc(var(--u) * 2);
+  background: rgba(8, 10, 24, 0.72);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0, 0, 0, 0.5);
+}
+
+/* ---- Opponent + boneyard strip ------------------------------------------ */
+.board__row--top {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(var(--u) * 1.5);
+}
+.oppo,
+.bone {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 0.8);
+  padding: calc(var(--u) * 0.7) calc(var(--u) * 1.4);
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+}
+.oppo__label,
+.bone__label {
+  color: var(--text-dim);
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.oppo__count,
+.bone__count {
+  font-weight: 800;
+  font-size: 1.3em;
+  color: var(--focus);
+  font-variant-numeric: tabular-nums;
+}
+.oppo__sub { color: var(--text-dim); font-size: 0.8em; }
+
+/* ---- The chain + open ends ---------------------------------------------- */
+.chainwrap {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+}
+.chain {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  /* Centre the played tiles in the strip; `safe` keeps the start reachable once
+     the chain grows wide enough to scroll. */
+  justify-content: safe center;
+  gap: calc(var(--u) * 0.5);
+  min-height: calc(var(--u) * 7);
+  padding: calc(var(--u) * 0.8);
+  background: rgba(20, 24, 48, 0.5);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  /* The chain grows; let it scroll horizontally rather than overflow the page. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+.chain:empty::before {
+  content: "—";
+  color: var(--text-dim);
+  margin: auto;
+}
+
+/* The two open-end play buttons. They light up green when the selected hand
+   tile can legally attach there. */
+.endbtn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.15em;
+  min-width: calc(var(--u) * 4.5);
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 0.9);
+  font-size: 1em;
+  font-weight: 800;
+  color: var(--text-dim);
+  background: var(--surface);
+  border: 2px solid var(--surface-2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: border-color 100ms ease, box-shadow 100ms ease, color 100ms ease;
+}
+.endbtn__pip {
+  font-size: 1.3em;
+  color: var(--focus);
+  font-variant-numeric: tabular-nums;
+}
+/* A legal target for the currently selected tile. */
+.endbtn--legal {
+  border-color: var(--good);
+  color: var(--good);
+  box-shadow: 0 0 0 2px var(--good);
+}
+.endbtn--legal .endbtn__pip { color: var(--good); }
+.endbtn:disabled { opacity: 0.4; cursor: default; }
+
+/* ---- Domino tile (CSS pips) --------------------------------------------- */
+/* A tile is two square halves stacked along the long axis. Each half is a 3x3
+   pip grid; only the cells for that half's value are lit. */
+.tile {
+  --cell: clamp(11px, 2.6vw, 18px);   /* one pip-grid cell (hand tiles) */
+  display: inline-flex;
+  flex-direction: column;             /* halves stacked vertically (portrait tile) */
+  flex: 0 0 auto;
+  background: #f6f7fb;
+  border: 2px solid #cfd4e6;
+  border-radius: calc(var(--u) * 0.9);
+  box-shadow: 0 calc(var(--u) * 0.4) calc(var(--u) * 1) rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.tile__half {
+  display: grid;
+  grid-template-columns: repeat(3, var(--cell));
+  grid-template-rows: repeat(3, var(--cell));
+  place-items: center;
+  padding: calc(var(--cell) * 0.18);
+}
+.tile__half + .tile__half { border-top: 2px solid #cfd4e6; }
+.tile__pip {
+  width: calc(var(--cell) * 0.62);
+  height: calc(var(--cell) * 0.62);
+  border-radius: 50%;
+  background: #10142b;
+}
+.tile__pip--off { background: transparent; }
+
+/* Chain tiles: a touch smaller than hand tiles. Doubles get a subtle accent ring
+   (the old crosswise rotation overflowed the row and overlapped neighbours, so
+   it's dropped in favour of a clean inline strip). */
+.chain .tile { --cell: clamp(9px, 2.1vw, 15px); }
+.chain .tile--double { box-shadow: 0 0 0 2px var(--focus), 0 calc(var(--u) * 0.4) calc(var(--u) * 1) rgba(0, 0, 0, 0.45); }
+
+/* ---- Your hand ---------------------------------------------------------- */
+.hand {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(5px, 1.4vw, 12px);
+  min-height: calc(var(--u) * 7);
+}
+.hand .tile {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  transition: transform 100ms ease, box-shadow 100ms ease, border-color 100ms ease;
+}
+/* Tiles with no legal move are dimmed. */
+.tile--dead { opacity: 0.45; }
+/* The roaming cursor (keyboard / remote). */
+.tile--cursor {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus), 0 calc(var(--u) * 0.4) calc(var(--u) * 1) rgba(0, 0, 0, 0.45);
+  transform: translateY(calc(var(--u) * -0.5));
+}
+/* The selected tile awaiting an end choice. */
+.tile--selected {
+  border-color: var(--good);
+  box-shadow: 0 0 0 3px var(--good);
+  transform: translateY(calc(var(--u) * -0.8));
+}
+
+/* ---- Scoreboard strip --------------------------------------------------- */
+.dom-scoreboard {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.2);
+  width: 100%;
+}
+.dom-scoreboard .score {
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.2);
+  text-align: center;
+  min-width: calc(var(--u) * 7);
+}
+
+/* ---- Primary controls (always visible) ---------------------------------- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.4);
+  width: 100%;
+}
+.ctl {
+  min-width: calc(var(--u) * 9);
+  font-size: 1em;
+}
+.ctl--primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+  font-weight: 800;
+}
+.ctl--primary:active { transform: scale(0.96); }
+.ctl:disabled { opacity: 0.4; cursor: default; }
+
+/* ---- Responsive: portrait phones ---------------------------------------- */
+@media (max-width: 640px), (orientation: portrait) {
+  .board {
+    width: 96vw;
+    padding: calc(var(--u) * 1.4);
+    gap: calc(var(--u) * 1.2);
+  }
+  .tile { --cell: clamp(12px, 4vw, 18px); }
+  .chain .tile { --cell: clamp(9px, 3vw, 14px); }
+  .controls { gap: calc(var(--u) * 1); }
+  .ctl { min-width: calc(var(--u) * 7); }
+}
