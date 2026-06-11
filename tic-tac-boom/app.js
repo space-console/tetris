@@ -1,444 +1,393 @@
-// Tic-Tac-Boom for Space Console — entry point.
-// Wires the shared intent stream to the pure engine, renders the bomb/combo/
-// players, owns the hidden random fuse (the engine is clock-free), and manages a
-// native <input> for typing words. The engine owns all rules; this file is
-// input + render + the timer loop only.
+// Tic-Tac-Boom (Bomberman-style) for Space Console — entry point.
+// Owns the canvas render + input; the Engine (engine.js) owns all maze/bomb/AI
+// logic and the fixed-step simulation. You are the red bomber (player 0) vs three
+// AI bombers; walk the maze, drop bombs, grab power-ups, be the last one standing.
 //
-// Game states: loading → menu → pass → playing → over.
-//   - pass: a "Ready" gate between hot-seat turns / after a boom, so the next
-//     player can take the device before the (live) fuse keeps burning.
-//   - playing: the fuse runs; the holder types a word containing the combo.
+// States: idle (start overlay) → playing → over.
+//
+// Movement is HELD (press-and-hold a direction), which the shared discrete-intent
+// layer can't express — so, like the other action games, movement uses direct
+// keydown/keyup + on-screen D-pad pointer events. The shared Input still supplies
+// enter (start / restart) and back (hub). Space/Enter drops a bomb.
 
-import { Engine, buildDictionary, buildCombos } from "./engine.js?v=857ce26d-ee18-4390-96f8-6d29d2db3b03";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=857ce26d-ee18-4390-96f8-6d29d2db3b03";
-import { Sound } from "../assets/js/shared/sound.js?v=857ce26d-ee18-4390-96f8-6d29d2db3b03";
+import {
+  Engine, COLS, ROWS, WALL, SOFT,
+  PU_BOMB, PU_FIRE, PU_SPEED, key,
+} from "./engine.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
+import { Input } from "../assets/js/shared/input.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
+import { Sound } from "../assets/js/shared/sound.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
 
 const input = new Input();
 const sound = new Sound();
-let engine = null;          // built once the word list loads
-let dict = null;            // validation Set, reused across games
-let combos = null;          // satisfiable combos, reused across games
+let engine = new Engine({ players: 4 });
+
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+const TILE = canvas.width / COLS;     // pixels per tile (canvas is COLS×ROWS tiles)
 
 const els = {
   status: document.getElementById("status"),
-  turn: document.getElementById("turn"),
-  bomb: document.getElementById("bomb"),
-  combo: document.getElementById("combo"),
-  entry: document.getElementById("entry"),
-  wordInput: document.getElementById("wordInput"),
-  submitBtn: document.getElementById("submitBtn"),
-  feedback: document.getElementById("feedback"),
   overlay: document.getElementById("overlay"),
   overlayTitle: document.getElementById("overlayTitle"),
   overlayMsg: document.getElementById("overlayMsg"),
-  menu: document.getElementById("menu"),
-  playersChoices: document.getElementById("playersChoices"),
-  livesChoices: document.getElementById("livesChoices"),
   startBtn: document.getElementById("startBtn"),
-  readyBtn: document.getElementById("readyBtn"),
   players: document.getElementById("players"),
-  usedCount: document.getElementById("usedCount"),
+  aliveCount: document.getElementById("aliveCount"),
+  dpad: document.getElementById("dpad"),
+  bombBtn: document.getElementById("bombBtn"),
   mute: document.getElementById("mute"),
 };
 
-// loading | menu | pass | playing | over
-let state = "loading";
+const FIXED_DT = 1 / 60;
+const MAX_FRAME = 0.05;
+let state = "idle";          // idle | playing | over
+let lastTime = 0;
+let acc = 0;
+let anim = 0;                // free-running animation clock (for pulses)
 
-// Start-menu choices.
-let numPlayers = 3;         // 2–4, default 3
-let numLives = 2;           // 1–4, default 2
+// ---- Held-direction input (keyboard + touch share this) -------------------
+const heldOrder = [];        // directions currently held, most-recent last
+const tap = { dir: null, until: 0 };   // brief nudge from a discrete intent (remote)
 
-// ---- The hidden, random fuse ----------------------------------------------
-// The bomb timer is intentionally hidden: players feel tension from a pulsing
-// bomb, never an exact countdown. A round's fuse is a random duration; the
-// remaining time CARRIES OVER between turns (a fast answer leaves a short fuse
-// for the next player). We only expose coarse visual urgency (calm → tense).
-const FUSE_MIN = 10;        // seconds — shortest a fresh round's fuse can be
-const FUSE_MAX = 30;        // seconds — longest
-let fuse = 0;               // seconds remaining on the current bomb
-let fuseTotal = 0;          // the fuse length when this round started (for ratio)
-let lastTick = 0;           // performance.now() of the previous animation frame
-let rafId = 0;
-
-function freshFuse() {
-  fuseTotal = FUSE_MIN + Math.random() * (FUSE_MAX - FUSE_MIN);
-  fuse = fuseTotal;
+function pressDir(dir) {
+  if (!heldOrder.includes(dir)) heldOrder.push(dir);
+}
+function releaseDir(dir) {
+  const i = heldOrder.indexOf(dir);
+  if (i !== -1) heldOrder.splice(i, 1);
+}
+function currentWantDir() {
+  if (heldOrder.length) return heldOrder[heldOrder.length - 1];
+  if (anim < tap.until) return tap.dir;
+  return null;
 }
 
-// ---- Cross-folder word list (documented dependency) -----------------------
-// We reuse the Scrabble bundle's word list from the SIBLING folder. On the
-// deployed site and the dev server every game is served from the same origin,
-// so this relative fetch resolves to /scrabble/words.txt. We never modify the
-// scrabble folder — only read its ~168k-word list to build our validation Set
-// and the satisfiable-combo list.
-function loadWords() {
-  setStatus("Loading words…");
-  showOverlay("Tic-Tac-Boom", "Loading words…");
-  hide(els.menu);
-  hide(els.readyBtn);
-  fetch("../scrabble/words.txt")
-    .then((r) => r.text())
-    .then((text) => {
-      dict = buildDictionary(text);
-      combos = buildCombos(dict);          // common, satisfiable 2–3 letter combos
-      state = "menu";
-      showMenu();
-    })
-    .catch(() => {
-      setStatus("Failed to load words");
-      showOverlay("Tic-Tac-Boom", "Could not load the word list. Reload to retry.");
-    });
-}
+const KEY_DIR = {
+  ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
+  w: "up", s: "down", a: "left", d: "right", W: "up", S: "down", A: "left", D: "right",
+};
 
-// ---- Start menu -----------------------------------------------------------
-function buildMenuChoices() {
-  // Player-count chips: 2–4.
-  els.playersChoices.innerHTML = "";
-  for (let n = 2; n <= 4; n++) {
-    els.playersChoices.appendChild(chip(String(n), () => { numPlayers = n; renderMenu(); }, "players"));
-  }
-  // Lives chips: 1–4.
-  els.livesChoices.innerHTML = "";
-  for (let n = 1; n <= 4; n++) {
-    els.livesChoices.appendChild(chip(String(n), () => { numLives = n; renderMenu(); }, "lives"));
-  }
-}
-
-function chip(label, onPress, group) {
-  const b = document.createElement("button");
-  b.type = "button";
-  b.className = "chip";
-  b.textContent = label;
-  b.dataset.group = group;
-  b.dataset.value = label;
-  b.setAttribute("data-touch-ignore", "");
-  b.addEventListener("click", onPress);
-  return b;
-}
-
-function renderMenu() {
-  for (const c of els.playersChoices.children) {
-    c.classList.toggle("chip--active", Number(c.dataset.value) === numPlayers);
-  }
-  for (const c of els.livesChoices.children) {
-    c.classList.toggle("chip--active", Number(c.dataset.value) === numLives);
-  }
-}
-
-function showMenu() {
-  state = "menu";
-  stopLoop();
-  setStatus("Choose players & lives");
-  els.overlayTitle.textContent = "Tic-Tac-Boom";
-  els.overlayMsg.textContent = "Pass the device — a word bomb!";
-  show(els.menu);
-  hide(els.readyBtn);
-  showOverlayEl();
-  renderMenu();
-  renderPlayers();
+function dropBomb() {
+  if (state !== "playing") return;
+  if (engine.placeBomb(0)) sound.lock();
 }
 
 // ---- Game lifecycle -------------------------------------------------------
 function startGame() {
-  sound.resume();   // first user gesture unlocks audio (autoplay policy)
+  sound.resume();
   sound.start();
-  engine = new Engine({ dict, combos, players: numPlayers, lives: numLives });
-  state = "pass";
-  hide(els.menu);
-  freshFuse();      // a fresh round gets a fresh random fuse
-  goToPass(true);
-}
-
-// Pass gate: hide the live playfield behind a "Ready" button so the incoming
-// player can take the device before the fuse resumes burning.
-function goToPass(firstTurn) {
-  state = "pass";
-  stopLoop();
-  blurInput();
-  const p = engine.current + 1;
-  els.overlayTitle.textContent = `Player ${p}`;
-  els.overlayMsg.textContent = firstTurn
-    ? "You're up first. The bomb is ticking!"
-    : "Pass the device. The bomb is still ticking!";
-  hide(els.menu);
-  show(els.readyBtn);
-  showOverlayEl();
-  setStatus(`Player ${p} — get ready`);
-  renderPlayers();
-  draw();
-}
-
-// Begin the live turn for the current holder: hide the overlay, run the fuse,
-// focus the input so the native keyboard is ready.
-function beginTurn() {
+  engine = new Engine({ players: 4 });
+  heldOrder.length = 0;
+  tap.dir = null; tap.until = 0;
   state = "playing";
   hideOverlay();
-  els.feedback.innerHTML = "&nbsp;";
-  els.wordInput.value = "";
-  draw();
-  focusInput();
-  lastTick = performance.now();
-  startLoop();
+  setStatus("Bomb the maze!");
+  lastTime = performance.now();
+  acc = 0;
+  renderPanel();
 }
 
 function endGame() {
   state = "over";
-  stopLoop();
-  blurInput();
-  const p = engine.winner + 1;
-  sound.levelUp();
-  els.overlayTitle.textContent = `Player ${p} wins!`;
-  els.overlayMsg.textContent = isTouchDevice()
-    ? "Tap Ready for a new game"
-    : "Press Enter for a new game";
-  hide(els.menu);
-  show(els.readyBtn);
-  els.readyBtn.textContent = "New game";
-  showOverlayEl();
-  setStatus(`Player ${p} wins`);
-  renderPlayers();
+  const w = engine.winner;
+  if (w === 0) { sound.levelUp(); showOverlay("You win! 🏆", "Last bomber standing. Press Enter to play again."); setStatus("You win!"); }
+  else if (w === -1) { sound.gameOver(); showOverlay("Draw!", "Everyone went out together. Press Enter to retry."); setStatus("Draw"); }
+  else { sound.gameOver(); showOverlay("Boom — you're out", `${label(w)} wins. Press Enter to play again.`); setStatus(`${label(w)} wins`); }
+  els.startBtn.textContent = "Play again";
+  renderPanel();
 }
 
-// ---- Word submission ------------------------------------------------------
-function submitWord() {
-  if (state !== "playing") return;
-  const raw = els.wordInput.value;
-  const res = engine.submit(raw);
-  if (res.ok) {
-    sound.clear(1);                 // valid word
-    sound.move();                   // ...and the bomb passes on
-    flash(`✓ ${res.word}`, "good");
-    els.usedCount.textContent = engine.used.size;
-    // The fuse CARRIES OVER; we do not reset it on a pass. Hand off to the next
-    // surviving player behind a pass gate.
-    goToPass(false);
-    return;
-  }
-  flash(rejectMsg(res.reason), "bad");
-  els.wordInput.value = "";
-  focusInput();
-}
-
-function rejectMsg(reason) {
-  switch (reason) {
-    case "empty": return "Type a word";
-    case "nocombo": return `✗ must contain ${engine.combo}`;
-    case "notword": return "✗ not in the word list";
-    case "used": return "✗ already used this round";
-    default: return "✗ invalid";
+// ---- Simulation loop ------------------------------------------------------
+function processEvents(events) {
+  for (const ev of events) {
+    if (ev.type === "boom") sound.drop();
+    else if (ev.type === "block") sound.move();
+    else if (ev.type === "pickup") sound.clear(1);
+    else if (ev.type === "death") { if (ev.human) sound.gameOver(); else sound.rotate(); }
+    else if (ev.type === "sudden") { sound.drop(); setStatus("⚠ Sudden death — walls closing in!"); }
+    else if (ev.type === "over") endGame();
   }
 }
 
-// ---- The fuse loop --------------------------------------------------------
-function startLoop() {
-  if (rafId) return;
-  rafId = requestAnimationFrame(tick);
-}
-function stopLoop() {
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = 0;
-}
+function loop(now) {
+  anim = now / 1000;
+  if (state === "playing") {
+    let dt = (now - lastTime) / 1000;
+    lastTime = now;
+    if (dt > MAX_FRAME) dt = MAX_FRAME;
 
-function tick(nowMs) {
-  rafId = requestAnimationFrame(tick);
-  if (state !== "playing") return;
-  const dt = Math.min(0.1, (nowMs - lastTick) / 1000);  // clamp tab-switch gaps
-  lastTick = nowMs;
-  fuse -= dt;
-  if (fuse <= 0) {
-    fuse = 0;
-    boom();
-    return;
+    engine.setWantDir(0, currentWantDir());
+
+    acc += dt;
+    while (acc >= FIXED_DT) {
+      const events = engine.update(FIXED_DT);
+      acc -= FIXED_DT;
+      if (events.length) processEvents(events);
+      if (state !== "playing") break;
+    }
+    renderPanel();
+  } else {
+    lastTime = now;
   }
-  renderBomb();
-}
-
-function boom() {
-  stopLoop();
-  blurInput();
-  const res = engine.explode();
-  sound.gameOver();                  // explosion
-  if (res.eliminated) sound.drop();  // a player knocked out
-  renderPlayers();
-
-  if (res.winner !== null) { endGame(); return; }
-
-  // Fresh round for the next survivor: new random fuse, cleared used words.
-  els.usedCount.textContent = engine.used.size;
-  freshFuse();
-  const holder = engine.current + 1;
-  const downed = res.holder + 1;
-  state = "pass";
-  els.overlayTitle.textContent = "💥 BOOM!";
-  els.overlayMsg.textContent = res.eliminated
-    ? `Player ${downed} is out! Player ${holder}, you're up.`
-    : `Player ${downed} lost a life. Player ${holder}, you're up.`;
-  hide(els.menu);
-  show(els.readyBtn);
-  els.readyBtn.textContent = "Ready";
-  showOverlayEl();
-  setStatus(`Boom! Player ${holder} — get ready`);
   draw();
+  requestAnimationFrame(loop);
 }
 
 // ---- Rendering ------------------------------------------------------------
 function draw() {
-  els.turn.textContent = `Player ${engine.current + 1}`;
-  els.combo.textContent = engine.combo;
-  els.usedCount.textContent = engine.used.size;
-  renderBomb();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+  drawPickups();
+  drawBombs();
+  drawFlames();
+  drawPlayers();
 }
 
-// Coarse visual urgency only — NEVER the exact seconds. Below ~30% fuse the
-// bomb pulses faster ("tense"); we also vary pulse speed continuously via a CSS
-// custom property so it visibly quickens as time runs out.
-function renderBomb() {
-  if (!engine) return;
-  const ratio = fuseTotal > 0 ? Math.max(0, fuse / fuseTotal) : 0;
-  // Pulse period shrinks from ~1.1s (calm) to ~0.28s (frantic).
-  const period = 0.28 + ratio * 0.82;
-  els.bomb.style.setProperty("--pulse", period.toFixed(2) + "s");
-  els.bomb.classList.toggle("bomb--tense", ratio < 0.3);
-}
+function drawGrid() {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const x = c * TILE, y = r * TILE;
+      // Floor: subtle checker for readability.
+      ctx.fillStyle = (c + r) % 2 === 0 ? "#16203f" : "#121a36";
+      ctx.fillRect(x, y, TILE, TILE);
 
-function renderPlayers() {
-  if (!engine) {
-    // Menu preview: show the chosen player count with full lives.
-    els.players.innerHTML = "";
-    for (let i = 0; i < numPlayers; i++) {
-      els.players.appendChild(playerRow(i, numLives, false, false));
+      const v = engine.cell(c, r);
+      if (v === WALL) drawWall(x, y, engine.sdWalls.has(key(c, r)));
+      else if (v === SOFT) drawSoft(x, y);
     }
-    return;
   }
+}
+
+function drawWall(x, y, sudden) {
+  const g = ctx.createLinearGradient(x, y, x, y + TILE);
+  if (sudden) { g.addColorStop(0, "#c0506a"); g.addColorStop(1, "#6e2336"); }
+  else { g.addColorStop(0, "#6b7790"); g.addColorStop(1, "#3a435c"); }
+  ctx.fillStyle = g;
+  roundRect(x + 1, y + 1, TILE - 2, TILE - 2, 5);
+  ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,0.18)";
+  roundRect(x + 3, y + 3, TILE - 6, (TILE - 6) * 0.42, 4);
+  ctx.fill();
+}
+
+function drawSoft(x, y) {
+  ctx.fillStyle = "#9a5a2c";
+  roundRect(x + 2, y + 2, TILE - 4, TILE - 4, 5);
+  ctx.fill();
+  // Brick lines.
+  ctx.strokeStyle = "rgba(0,0,0,0.28)";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x + 2, y + TILE / 2); ctx.lineTo(x + TILE - 2, y + TILE / 2);
+  ctx.moveTo(x + TILE / 2, y + 2); ctx.lineTo(x + TILE / 2, y + TILE / 2);
+  ctx.moveTo(x + TILE * 0.28, y + TILE / 2); ctx.lineTo(x + TILE * 0.28, y + TILE - 2);
+  ctx.moveTo(x + TILE * 0.72, y + TILE / 2); ctx.lineTo(x + TILE * 0.72, y + TILE - 2);
+  ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  roundRect(x + 3, y + 3, TILE - 6, 4, 2);
+  ctx.fill();
+}
+
+const PU_ICON = { [PU_BOMB]: "💣", [PU_FIRE]: "🔥", [PU_SPEED]: "👟" };
+const PU_BG = { [PU_BOMB]: "#3b7de2", [PU_FIRE]: "#e2683b", [PU_SPEED]: "#2fb86b" };
+function drawPickups() {
+  for (const [k, type] of engine.pickups) {
+    const c = k % COLS, r = Math.floor(k / COLS);
+    const x = c * TILE, y = r * TILE;
+    const pulse = 0.5 + 0.5 * Math.sin(anim * 4 + k);
+    ctx.fillStyle = PU_BG[type];
+    ctx.globalAlpha = 0.5 + 0.4 * pulse;
+    roundRect(x + 5, y + 5, TILE - 10, TILE - 10, 7);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.font = `${TILE * 0.5}px system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(PU_ICON[type], x + TILE / 2, y + TILE / 2 + 1);
+  }
+}
+
+function drawBombs() {
+  for (const b of engine.bombs) {
+    const cx = (b.col + 0.5) * TILE, cy = (b.row + 0.5) * TILE;
+    // Pulse faster as the fuse runs down.
+    const t = 1 - Math.max(0, b.fuse) / 2.4;
+    const pulse = 1 + 0.12 * Math.sin(anim * (6 + t * 22));
+    const rr = TILE * 0.34 * pulse;
+    ctx.beginPath();
+    ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+    ctx.fillStyle = "#10131f";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.25)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Highlight.
+    ctx.beginPath();
+    ctx.arc(cx - rr * 0.3, cy - rr * 0.3, rr * 0.28, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(255,255,255,0.45)";
+    ctx.fill();
+    // Fuse spark.
+    ctx.fillStyle = (Math.sin(anim * 30) > 0) ? "#ffd34d" : "#ff7a3d";
+    ctx.beginPath();
+    ctx.arc(cx + rr * 0.5, cy - rr * 0.9, 2.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawFlames() {
+  for (const [k, t] of engine.flames) {
+    const c = k % COLS, r = Math.floor(k / COLS);
+    const x = c * TILE, y = r * TILE;
+    const a = Math.min(1, t / 0.5);
+    const g = ctx.createRadialGradient(x + TILE / 2, y + TILE / 2, 2, x + TILE / 2, y + TILE / 2, TILE * 0.7);
+    g.addColorStop(0, `rgba(255,240,170,${0.95 * a})`);
+    g.addColorStop(0.5, `rgba(255,150,40,${0.9 * a})`);
+    g.addColorStop(1, `rgba(255,80,20,${0.15 * a})`);
+    ctx.fillStyle = g;
+    roundRect(x + 1, y + 1, TILE - 2, TILE - 2, 6);
+    ctx.fill();
+  }
+}
+
+const COLOR_HEX = { red: "#e23b4e", blue: "#3b7de2", green: "#2fb86b", yellow: "#e7b53b" };
+function drawPlayers() {
+  for (const p of engine.players) {
+    if (!p.alive) continue;
+    const cx = (p.x + 0.5) * TILE, cy = (p.y + 0.5) * TILE;
+    const rr = TILE * 0.38;
+    // Body.
+    ctx.beginPath();
+    ctx.arc(cx, cy, rr, 0, Math.PI * 2);
+    ctx.fillStyle = COLOR_HEX[p.color];
+    ctx.shadowColor = "rgba(0,0,0,0.5)";
+    ctx.shadowBlur = 6;
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // Identify the human with a white ring.
+    if (p.id === 0) {
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+    // Eyes, offset toward the facing direction.
+    const fx = p.dir === "left" ? -1 : p.dir === "right" ? 1 : 0;
+    const fy = p.dir === "up" ? -1 : p.dir === "down" ? 1 : 0;
+    const ex = cx + fx * rr * 0.22, ey = cy + fy * rr * 0.22 - rr * 0.1;
+    for (const s of [-1, 1]) {
+      ctx.beginPath();
+      ctx.arc(ex + s * rr * 0.3, ey, rr * 0.18, 0, Math.PI * 2);
+      ctx.fillStyle = "#fff";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(ex + s * rr * 0.3 + fx * 1.5, ey + fy * 1.5, rr * 0.09, 0, Math.PI * 2);
+      ctx.fillStyle = "#10142b";
+      ctx.fill();
+    }
+  }
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// ---- Side panel -----------------------------------------------------------
+function renderPanel() {
   els.players.innerHTML = "";
-  for (let i = 0; i < engine.numPlayers; i++) {
-    const lives = engine.lives[i];
-    const out = lives === 0;
-    const active = state !== "menu" && state !== "over" && i === engine.current && !out;
-    els.players.appendChild(playerRow(i, lives, active, out));
+  let alive = 0;
+  for (const p of engine.players) {
+    if (p.alive) alive += 1;
+    const li = document.createElement("li");
+    li.className = "player" + (p.alive ? "" : " player--out");
+    const dot = document.createElement("span");
+    dot.className = "player__dot";
+    dot.style.background = COLOR_HEX[p.color];
+    const name = document.createElement("span");
+    name.className = "player__name";
+    name.textContent = p.id === 0 ? "You" : `AI ${p.id}`;
+    const stats = document.createElement("span");
+    stats.className = "player__stats";
+    stats.textContent = p.alive ? `💣${p.maxBombs} 🔥${p.range}` : "💀";
+    li.append(dot, name, stats);
+    els.players.appendChild(li);
   }
+  els.aliveCount.textContent = String(alive);
 }
 
-function playerRow(i, lives, active, out) {
-  const li = document.createElement("li");
-  li.className = "player" + (active ? " player--active" : "") + (out ? " player--out" : "");
-  const name = document.createElement("span");
-  name.className = "player__name";
-  name.textContent = `Player ${i + 1}`;
-  const hearts = document.createElement("span");
-  hearts.className = "player__lives";
-  hearts.textContent = out ? "☠" : "❤".repeat(lives);
-  li.append(name, hearts);
-  return li;
-}
+function label(id) { return id === 0 ? "You" : `AI ${id}`; }
 
-function flash(msg, kind) {
-  els.feedback.textContent = msg;
-  els.feedback.className = "feedback feedback--" + kind;
-}
-
-// ---- Native input focus handling ------------------------------------------
-// The shared Input layer listens on window keydown and preventDefaults mapped
-// keys (arrows, Space, Enter, plus WASD). That would BOTH hijack Enter and eat
-// "w/a/s/d" letters while typing. Our approach:
-//   1) We still call input.start() so the .touch class + the Back gesture work.
-//   2) We capture keydown on the window at the CAPTURE phase, BEFORE the shared
-//      listener, and stopImmediatePropagation() for any key while the word
-//      input is focused — except Escape/Back, which we let flow through to the
-//      shared layer so Back still leaves to the menu/hub. This guarantees every
-//      letter, Space and Enter reaches the <input> untouched.
-//   3) The <input> lives in a <form>; submit (Enter or the Go button) is handled
-//      by the form's submit event, so Enter checks the word natively.
-// Net effect: typing is fully native; the shared intent stream only drives menu/
-// pass/over navigation when the input is NOT focused.
-function inputFocused() {
-  return document.activeElement === els.wordInput;
-}
-function focusInput() {
-  // Defer so the overlay has fully hidden before the keyboard pops on mobile.
-  requestAnimationFrame(() => els.wordInput.focus());
-}
-function blurInput() {
-  els.wordInput.blur();
-}
-
-// ---- Shared intent handling (menu / pass / over only) ---------------------
-// While playing, typing owns the keyboard; navigation intents are ignored here
-// (Enter is handled by the form). Back always works (it's a gesture/Escape that
-// bypasses the input via the capture guard below).
-input.on((intent) => {
-  if (intent === "back") {
-    if (state === "menu") { location.href = "../"; return; }
-    showMenu();
-    return;
-  }
-  if (intent !== "enter") return;
-  switch (state) {
-    case "menu": startGame(); break;
-    case "pass": beginTurn(); break;
-    case "over": showMenu(); break;
-    default: break;        // playing: Enter is the form's job
-  }
-});
-
-// ---- Overlay / status helpers ---------------------------------------------
-function show(el) { el.classList.remove("menu--hidden", "menu__item--hidden"); }
-function hide(el) {
-  el.classList.add(el === els.menu ? "menu--hidden" : "menu__item--hidden");
-}
-function showOverlayEl() { els.overlay.classList.remove("overlay--hidden"); }
-function hideOverlay() { els.overlay.classList.add("overlay--hidden"); }
+// ---- Overlay / status -----------------------------------------------------
 function showOverlay(title, msg) {
   els.overlayTitle.textContent = title;
   els.overlayMsg.textContent = msg;
-  showOverlayEl();
+  els.overlay.classList.remove("overlay--hidden");
 }
+function hideOverlay() { els.overlay.classList.add("overlay--hidden"); }
 function setStatus(text) { els.status.textContent = text; }
 
-// ---- Mute control (meta, deliberately outside the gameplay intent layer) ---
-function renderMute() {
+// ---- Mute (meta, outside the gameplay intent layer) -----------------------
+function toggleMute() {
+  sound.toggleMute();
   els.mute.textContent = sound.muted ? "🔇" : "🔊";
   els.mute.setAttribute("aria-pressed", String(sound.muted));
 }
-function toggleMute() {
-  sound.toggleMute();
-  renderMute();
-}
+
+// ---- Discrete intents (start / restart / hub / remote nudge) ---------------
+input.on((intent) => {
+  if (intent === "back") { location.href = "../"; return; }
+  if (intent === "enter") {
+    if (state === "idle" || state === "over") startGame();
+    return;
+  }
+  // Directional intents (TV remote / gamepad): a brief one-tile nudge, since the
+  // keyboard/touch held path is the primary control.
+  if (state === "playing" && ["up", "down", "left", "right"].includes(intent)) {
+    tap.dir = intent;
+    tap.until = anim + 0.16;
+  }
+});
 
 // ---- Boot -----------------------------------------------------------------
 function boot() {
-  input.start();   // adds .touch + Back gesture; we guard typing keys below
+  input.start();
 
-  // Capture-phase guard: while the word input is focused, keep every typing key
-  // (letters/Space/Enter) from reaching the shared Input listener. Escape/Back
-  // is allowed through so the player can still bail to the menu.
+  // Keyboard: held movement + bomb + mute. We listen directly (the shared layer
+  // can't express press-and-hold) and don't preventDefault so the page stays sane.
   window.addEventListener("keydown", (e) => {
-    if (!inputFocused()) return;
-    if (e.key === "Escape") return;             // let Back reach the shared layer
-    e.stopImmediatePropagation();               // typing stays native
-  }, true);
-
-  // Form submit = check the word (Enter key or the Go button, natively).
-  els.entry.addEventListener("submit", (e) => {
-    e.preventDefault();
-    submitWord();
+    if (e.key === "m" || e.key === "M") { toggleMute(); return; }
+    if (e.key === " " || e.key === "Enter" || e.key === "x" || e.key === "X") {
+      if (state === "playing") { e.preventDefault(); dropBomb(); }
+      return;
+    }
+    const dir = KEY_DIR[e.key];
+    if (dir) { e.preventDefault(); pressDir(dir); }
+  });
+  window.addEventListener("keyup", (e) => {
+    const dir = KEY_DIR[e.key];
+    if (dir) releaseDir(dir);
   });
 
-  // Menu interactions.
-  buildMenuChoices();
-  els.startBtn.addEventListener("click", () => { if (state === "menu") startGame(); });
-  els.readyBtn.addEventListener("click", () => {
-    if (state === "pass") beginTurn();
-    else if (state === "over") showMenu();
-  });
+  // Touch D-pad: hold to move.
+  for (const btn of els.dpad.querySelectorAll(".dbtn")) {
+    const dir = btn.dataset.dir;
+    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); pressDir(dir); });
+    btn.addEventListener("pointerup", (e) => { e.preventDefault(); releaseDir(dir); });
+    btn.addEventListener("pointerleave", () => releaseDir(dir));
+    btn.addEventListener("pointercancel", () => releaseDir(dir));
+  }
+  els.bombBtn.addEventListener("pointerdown", (e) => { e.preventDefault(); dropBomb(); });
 
-  // Mute (meta, outside the gameplay intent layer).
+  els.startBtn.addEventListener("click", () => { if (state !== "playing") startGame(); });
   els.mute.addEventListener("click", toggleMute);
-  window.addEventListener("keydown", (e) => {
-    if ((e.key === "m" || e.key === "M") && !inputFocused()) toggleMute();
-  });
 
-  loadWords();
+  renderPanel();
+  draw();
+  requestAnimationFrame(loop);
 }
 
 boot();

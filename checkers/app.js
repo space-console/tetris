@@ -5,9 +5,9 @@
 // game states (menu → playing → thinking → over). The engine owns all checkers
 // logic; this file is input + render + modes only.
 
-import { Engine, RED, WHITE, rc, idx } from "./engine.js?v=857ce26d-ee18-4390-96f8-6d29d2db3b03";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=857ce26d-ee18-4390-96f8-6d29d2db3b03";
-import { Sound } from "../assets/js/shared/sound.js?v=857ce26d-ee18-4390-96f8-6d29d2db3b03";
+import { Engine, RED, WHITE, rc, idx } from "./engine.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
+import { Sound } from "../assets/js/shared/sound.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
 
 const engine = new Engine();
 const input = new Input();
