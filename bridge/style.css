@@ -3,7 +3,11 @@
    auction grid, your hand, and the bidding box. Sized in vw/vh/em so it fits a
    phone in portrait with no horizontal overflow. */
 
-.stage { display: block; min-height: 0; }
+/* The hand + controls live OUTSIDE the stage (always-visible bottom bar). The app
+   is locked to viewport height and body scrolling is off, so if the table is
+   taller than its grid track it would spill over the hand/controls. Scroll the
+   stage instead, so the table can never overlap them. */
+.stage { display: block; min-height: 0; overflow-y: auto; }
 
 /* ---- Table: a 3×3 grid with N top, W/E sides, S bottom, centre middle ----- */
 .table {
@@ -35,7 +39,7 @@
 .seat-slot--e { grid-area: e; }
 .seat-slot--s { grid-area: s; }
 .center { grid-area: c; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: calc(var(--u) * 0.8); min-height: calc(var(--u) * 18); }
+  justify-content: center; gap: calc(var(--u) * 0.6); min-height: calc(var(--u) * 12); }
 
 /* ---- Seat boxes -------------------------------------------------------- */
 .seat {
@@ -87,7 +91,7 @@
 }
 .trick {
   position: relative;
-  width: calc(var(--u) * 16); height: calc(var(--u) * 16);
+  width: calc(var(--u) * 12); height: calc(var(--u) * 12);
 }
 .trick__card { position: absolute; }
 .trick__card--n { top: 0; left: 50%; transform: translateX(-50%); }
@@ -118,17 +122,17 @@
 /* ---- Your hand (bottom) ------------------------------------------------- */
 .hand {
   display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end;
-  gap: calc(var(--u) * 0.5);
-  padding: calc(var(--u) * 0.8) 0;
-  min-height: calc(var(--u) * 8);
+  gap: calc(var(--u) * 0.4);
+  padding: calc(var(--u) * 0.5) 0;
+  min-height: calc(var(--u) * 6);
 }
 .hand .card {
-  width: calc(var(--u) * 4.4); height: calc(var(--u) * 6.2);
+  width: calc(var(--u) * 3.8); height: calc(var(--u) * 5.3);
   cursor: pointer;
   transition: transform 90ms ease, box-shadow 120ms ease;
 }
-.hand .card .card__rank { font-size: calc(var(--u) * 2.1); }
-.hand .card .card__suit { font-size: calc(var(--u) * 1.9); }
+.hand .card .card__rank { font-size: calc(var(--u) * 1.9); }
+.hand .card .card__suit { font-size: calc(var(--u) * 1.6); }
 
 /* Selectable / selected / illegal card states (play). */
 .card--selected {
@@ -166,26 +170,26 @@
 /* ---- Controls: bidding box / play hint --------------------------------- */
 .controls {
   display: flex; justify-content: center; align-items: center;
-  min-height: calc(var(--u) * 6);
-  padding: calc(var(--u) * 0.4) 0;
+  min-height: calc(var(--u) * 4.5);
+  padding: calc(var(--u) * 0.3) 0;
 }
 .ctrl-msg { color: var(--text-dim); font-size: 0.9em; text-align: center; }
 
 .bidbox {
   display: flex; flex-direction: column; align-items: center;
-  gap: calc(var(--u) * 0.6);
+  gap: calc(var(--u) * 0.4);
   width: 100%; max-width: min(96vw, 560px);
 }
-.bidbox__row { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(var(--u) * 0.5); }
-.bidbox__help { font-size: 0.78em; color: var(--text-dim); text-align: center; }
+.bidbox__row { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(var(--u) * 0.4); }
+.bidbox__help { font-size: 0.74em; color: var(--text-dim); text-align: center; }
 
 .bidbtn {
   -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   -webkit-user-select: none; user-select: none;
   display: inline-flex; align-items: center; justify-content: center;
-  min-width: calc(var(--u) * 5); min-height: calc(var(--u) * 5);
-  padding: calc(var(--u) * 0.6) calc(var(--u) * 0.9);
-  font-size: 1.05em; font-weight: 800; line-height: 1;
+  min-width: calc(var(--u) * 4.2); min-height: calc(var(--u) * 4.2);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.7);
+  font-size: 0.98em; font-weight: 800; line-height: 1;
   color: var(--text); background: var(--surface);
   border: 1px solid var(--surface-2); border-radius: var(--radius);
   cursor: pointer;
