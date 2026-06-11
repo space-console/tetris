@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Dominoes — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Dominoes</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Draw Dominoes · You vs AI</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <section class="board" aria-label="Dominoes board">
+        <!-- AI side: face-down tile count + boneyard count. -->
+        <div class="board__row board__row--top">
+          <div class="oppo" id="oppo" aria-label="Opponent hand count">
+            <span class="oppo__label">AI</span>
+            <span class="oppo__count" id="oppoCount">7</span>
+            <span class="oppo__sub">tiles</span>
+          </div>
+          <div class="bone" id="bone" aria-label="Boneyard count">
+            <span class="bone__label">Boneyard</span>
+            <span class="bone__count" id="boneCount">14</span>
+          </div>
+        </div>
+
+        <!-- The domino CHAIN. Two clickable open ends bracket a scrollable line. -->
+        <div class="chainwrap" aria-label="Layout chain">
+          <button class="endbtn" id="endL" type="button" data-touch-ignore
+                  aria-label="Play on left end">◀<span class="endbtn__pip" id="endLpip">–</span></button>
+          <div class="chain" id="chain" role="list"></div>
+          <button class="endbtn" id="endR" type="button" data-touch-ignore
+                  aria-label="Play on right end"><span class="endbtn__pip" id="endRpip">–</span>▶</button>
+        </div>
+
+        <!-- YOUR hand: pip tiles you can select. -->
+        <div class="hand" id="hand" role="group" aria-label="Your hand"></div>
+
+        <!-- Scoreboard: running round wins + your pip count. -->
+        <dl class="scoreboard dom-scoreboard">
+          <div class="score"><dt>You</dt><dd id="scoreYou">0</dd></div>
+          <div class="score"><dt>AI</dt><dd id="scoreAi">0</dd></div>
+          <div class="score"><dt>Your pips</dt><dd id="yourPips">0</dd></div>
+        </dl>
+
+        <!-- Always-visible primary controls. -->
+        <section class="controls" id="controls" aria-label="Controls"></section>
+
+        <!-- Overlay for start / round-over messaging. -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Dominoes</h1>
+            <p class="overlay__msg" id="overlayMsg">Press <kbd>Enter</kbd> to start</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">←→</kbd> Pick tile</span>
+      <span class="hint"><kbd class="key">↑↓</kbd> Choose end</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Play</span>
+      <span class="hint"><kbd class="key">D</kbd> Draw</span>
+      <span class="hint"><kbd class="key">P</kbd> Pass</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=3ac189ae-caeb-4eff-8794-e95b96dae173"></script>
+</body>
+</html>
