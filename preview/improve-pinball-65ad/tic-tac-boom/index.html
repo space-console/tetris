@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Tic-Tac-Boom — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Tic-Tac-Boom</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Loading words…</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Playfield: the bomb + combo + typing input -->
+      <section class="board" aria-label="Tic-Tac-Boom playfield">
+        <div class="play" id="play">
+          <!-- Whose turn -->
+          <div class="turn" id="turn" aria-live="polite">Player 1</div>
+
+          <!-- The bomb: a pulsing/ticking fuse. No exact seconds are shown. -->
+          <div class="bomb" id="bomb" aria-hidden="true">
+            <div class="bomb__fuse"><span class="bomb__spark"></span></div>
+            <div class="bomb__body">💣</div>
+          </div>
+
+          <!-- The letter combo the holder must put inside a real word -->
+          <div class="combo" id="combo" aria-label="Required letters">··</div>
+
+          <!-- Native text input + submit (uses the phone keyboard) -->
+          <form class="entry" id="entry" autocomplete="off">
+            <input
+              class="entry__input"
+              id="wordInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              aria-label="Type a word containing the letters"
+              placeholder="type a word…"
+              data-touch-ignore
+            />
+            <button class="entry__go" id="submitBtn" type="submit" data-touch-ignore>Go</button>
+          </form>
+
+          <!-- Per-attempt feedback (accepted / rejected reason) -->
+          <div class="feedback" id="feedback" aria-live="polite">&nbsp;</div>
+        </div>
+
+        <!-- Start menu / pass / game-over overlay -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Tic-Tac-Boom</h1>
+            <p class="overlay__msg" id="overlayMsg">Loading words…</p>
+
+            <!-- Start menu: choose players + lives, then start -->
+            <div class="menu menu--hidden" id="menu" role="menu" aria-label="Game options">
+              <div class="opt" role="group" aria-label="Players">
+                <span class="opt__label">Players</span>
+                <div class="opt__choices" id="playersChoices"></div>
+              </div>
+              <div class="opt" role="group" aria-label="Lives">
+                <span class="opt__label">Lives</span>
+                <div class="opt__choices" id="livesChoices"></div>
+              </div>
+              <button class="menu__item menu__item--go" id="startBtn" type="button" role="menuitem" data-touch-ignore>Start game</button>
+            </div>
+
+            <!-- Pass-the-device button between hot-seat turns / after a boom -->
+            <button class="menu__item menu__item--ready menu__item--hidden" id="readyBtn" type="button" data-touch-ignore>Ready</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side panel: each player's lives + used-word count -->
+      <aside class="panel" aria-label="Game info">
+        <div class="panel__block">
+          <div class="panel__label">Players</div>
+          <ul class="players" id="players"></ul>
+        </div>
+        <dl class="scoreboard">
+          <div class="score"><dt>Words used</dt><dd id="usedCount">0</dd></div>
+        </dl>
+      </aside>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">A–Z</kbd> Type a word</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Submit</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=aedcd9ac-736f-4f5e-b619-87059f648814"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Uno — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Uno</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Press Enter to start</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Uno table: the three bots around the top, the discard/stock in the
+           centre, your hand along the bottom. -->
+      <section class="table" aria-label="Uno table">
+        <div class="bots" id="bots" aria-label="Opponents"></div>
+
+        <div class="middle">
+          <div class="pile" id="pile" aria-label="Discard and stock">
+            <button class="stock" id="stock" type="button" data-touch-ignore
+                    aria-label="Draw from stock">
+              <span class="stock__count" id="stockCount">0</span>
+            </button>
+            <div class="discard" id="discard" aria-label="Discard pile"></div>
+          </div>
+          <div class="dir" id="dir" aria-live="polite">↻ Clockwise</div>
+        </div>
+
+        <div class="you" id="you" aria-label="Your hand"></div>
+
+        <!-- Overlay for start / win / colour-chooser messaging -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Uno</h1>
+            <p class="overlay__msg" id="overlayMsg">Tap or press <kbd>Enter</kbd> to start</p>
+            <!-- Colour chooser for wilds (populated in app.js; hidden until needed). -->
+            <div class="chooser" id="chooser" aria-label="Choose a colour"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Always-visible primary controls (not touch-only). -->
+    <section class="actions" id="actions" aria-label="Your actions"></section>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">←→</kbd> Pick card</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Play</span>
+      <span class="hint"><kbd class="key">D</kbd> Draw</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=aedcd9ac-736f-4f5e-b619-87059f648814"></script>
+</body>
+</html>
