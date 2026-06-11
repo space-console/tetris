@@ -42,7 +42,11 @@
       <!-- Side panel: die, roll button, turn info -->
       <aside class="panel" aria-label="Game info">
         <div class="diebox">
-          <div class="die" id="die" aria-label="Die">–</div>
+          <!-- 3D tumbling die: the cube's six pip faces are built in app.js; a
+               roll spins it and lands the rolled face toward the viewer. -->
+          <div class="die-scene die-scene--red" id="dieScene">
+            <div class="die-cube" id="dieCube" role="img" aria-label="Die"></div>
+          </div>
           <button class="rollbtn" id="rollBtn" type="button" data-touch-ignore>Roll</button>
         </div>
         <dl class="scoreboard">

@@ -49,20 +49,66 @@
 .cell--blue   { background: #3b7de2; }
 
 /* Track cells are pale; home-column + start cells take the player tint above. */
-.cell--track  { background: #e9edf4; }
+.cell--track  { background: #f1f4fa; }
+
+/* Path cells (track + home columns + starts) get a crisp gridline border so each
+   step is an individually visible square — the lane reads as stepping stones,
+   not one solid stripe. */
+.cell--path {
+  box-shadow: inset 0 0 0 1px rgba(20, 28, 48, 0.28);
+}
+
+/* Start squares carry a travel-direction arrow instead of the safe star, so the
+   launch point and direction of play read at a glance. */
+.cell--start::before {
+  position: absolute;
+  font-size: 0.95em;
+  font-weight: 900;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+.cell--start-right::before { content: "\2192"; } /* → */
+.cell--start-left::before  { content: "\2190"; } /* ← */
+.cell--start-up::before    { content: "\2191"; } /* ↑ */
+.cell--start-down::before  { content: "\2193"; } /* ↓ */
 
 /* Yard corner block: a soft pad with a darker inner well drawn by the disc
    nests. The whole 6×6 corner shares the colour; the inner 4×4 is lighter. */
 .cell--yard {
   background: #e9edf4;
 }
-.cell--yardpad { /* the four nests inside a yard hold the tokens */
+/* The four nests inside a yard: a white rounded well the token disc sits in,
+   giving the classic "four circles in a colour panel" look. */
+.cell--yardpad::after {
+  content: "";
+  position: absolute;
+  inset: 14%;
   border-radius: 50%;
-  box-shadow: inset 0 0 0 calc(var(--u) * 0.35) rgba(0, 0, 0, 0.18);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.14);
+  z-index: 0;
 }
 
-/* Centre finish triangle (the 3×3 middle). Tinted neutral; tokens stack here. */
-.cell--center { background: #cfd6e2; }
+/* Centre home: a light pad. The four colour triangles converging on it are drawn
+   as a clipped overlay on the cells flanking the finish. */
+.cell--center { background: #d7dde8; }
+.cell--homein {
+  background: #d7dde8;
+  overflow: hidden;
+}
+.cell--homein::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tri);          /* the owning colour, set inline in app.js */
+  z-index: 0;
+}
+.cell--homein-right::after { clip-path: polygon(0 0, 100% 50%, 0 100%); }
+.cell--homein-left::after  { clip-path: polygon(100% 0, 0 50%, 100% 100%); }
+.cell--homein-down::after  { clip-path: polygon(0 0, 100% 0, 50% 100%); }
+.cell--homein-up::after    { clip-path: polygon(50% 0, 0 100%, 100% 100%); }
 
 /* A safe square shows a star glyph. */
 .cell--safe::before {
@@ -133,31 +179,91 @@
   z-index: 5;
 }
 
-/* ---- Die display --------------------------------------------------------- */
+/* Destination hint: a ghost ring on the square a movable token would land on, so
+   the player can see where each move goes. The cursor's own target glows solid. */
+.cell--dest::after {
+  content: "";
+  position: absolute;
+  inset: 16%;
+  border-radius: 50%;
+  border: 2px dashed var(--focus);
+  background: rgba(108, 224, 255, 0.14);
+  pointer-events: none;
+  z-index: 6;
+}
+.cell--dest-active::after {
+  border-style: solid;
+  background: rgba(108, 224, 255, 0.26);
+  box-shadow: 0 0 0 3px rgba(108, 224, 255, 0.5);
+  animation: ludo-pulse 0.9s ease-in-out infinite;
+}
+
+/* ---- 3D die -------------------------------------------------------------- */
 .diebox {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: calc(var(--u) * 1.2);
+  gap: calc(var(--u) * 1.6);
   margin-bottom: calc(var(--u) * 2);
 }
-.die {
+
+/* The scene supplies perspective and a turn-coloured glow; the cube tumbles
+   inside it. --die-size drives both the cube and its pip-face geometry. */
+.die-scene {
+  --die-size: calc(var(--u) * 7);
+  --die-half: calc(var(--die-size) / 2);
   display: grid;
   place-items: center;
-  width: calc(var(--u) * 6);
-  height: calc(var(--u) * 6);
-  font-size: 2.4em;
-  font-weight: 800;
-  color: #0e1330;
-  background: #eef1ff;
-  border-radius: var(--radius);
-  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.15);
+  width: calc(var(--die-size) * 1.25);
+  height: calc(var(--die-size) * 1.25);
+  perspective: calc(var(--die-size) * 3.4);
+  border-radius: 24%;
+  transition: box-shadow 160ms ease;
 }
-/* The die border tints to the colour whose turn it is. */
-.die--red    { box-shadow: inset 0 0 0 calc(var(--u) * 0.5) #e23b4e; }
-.die--green  { box-shadow: inset 0 0 0 calc(var(--u) * 0.5) #2fb86b; }
-.die--yellow { box-shadow: inset 0 0 0 calc(var(--u) * 0.5) #e7b53b; }
-.die--blue   { box-shadow: inset 0 0 0 calc(var(--u) * 0.5) #3b7de2; }
+.die-scene--red    { box-shadow: 0 0 0 2px #e23b4e, 0 0 calc(var(--u) * 2) rgba(226, 59, 78, 0.5); }
+.die-scene--green  { box-shadow: 0 0 0 2px #2fb86b, 0 0 calc(var(--u) * 2) rgba(47, 184, 107, 0.5); }
+.die-scene--yellow { box-shadow: 0 0 0 2px #e7b53b, 0 0 calc(var(--u) * 2) rgba(231, 181, 59, 0.5); }
+.die-scene--blue   { box-shadow: 0 0 0 2px #3b7de2, 0 0 calc(var(--u) * 2) rgba(59, 125, 226, 0.5); }
+
+.die-cube {
+  position: relative;
+  width: var(--die-size);
+  height: var(--die-size);
+  transform-style: preserve-3d;
+  transform: rotateX(-24deg) rotateY(24deg); /* initial pose before JS settles it */
+  transition: transform 800ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+
+/* Six faces, each a 3×3 pip grid, pushed out to the cube surface. The custom
+   props --die-size/--die-half inherit from .die-scene. */
+.die-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 12%;
+  gap: 4%;
+  background: linear-gradient(145deg, #ffffff, #e6eaf5);
+  border-radius: 16%;
+  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.08);
+  backface-visibility: hidden;
+}
+.pipcell { display: grid; place-items: center; }
+.pip {
+  width: 62%;
+  height: 62%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #43548a, #10142b 75%);
+  box-shadow: inset 0 -1px 1px rgba(0, 0, 0, 0.4);
+}
+
+.die-face--1 { transform: rotateY(0deg)   translateZ(var(--die-half)); }
+.die-face--6 { transform: rotateY(180deg) translateZ(var(--die-half)); }
+.die-face--2 { transform: rotateY(90deg)  translateZ(var(--die-half)); }
+.die-face--5 { transform: rotateY(-90deg) translateZ(var(--die-half)); }
+.die-face--3 { transform: rotateX(90deg)  translateZ(var(--die-half)); }
+.die-face--4 { transform: rotateX(-90deg) translateZ(var(--die-half)); }
 
 .rollbtn {
   font: inherit;
