@@ -8,15 +8,83 @@
 
 import {
   Engine, COLORS, START, SAFE_SQUARES, TRACK_LEN, PATH_HOME_ENTRY, PATH_FINISH,
-} from "./engine.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
-import { Sound } from "../assets/js/shared/sound.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
+} from "./engine.js?v=f688c55d-20b3-40af-91a7-aeda20490a06";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=f688c55d-20b3-40af-91a7-aeda20490a06";
+import { Sound } from "../assets/js/shared/sound.js?v=f688c55d-20b3-40af-91a7-aeda20490a06";
 
 const engine = new Engine();
 const input = new Input();
 const sound = new Sound();
 
 const HUMAN = "red"; // the human always plays Red; green/yellow/blue are AI
+
+// Player colours as concrete hex (for inline tints the CSS can't reach, e.g. the
+// centre home triangles built per-cell).
+const COLORHEX = { red: "#e23b4e", green: "#2fb86b", yellow: "#e7b53b", blue: "#3b7de2" };
+
+// ---- 3D die ---------------------------------------------------------------
+// Pip layout per face, on a 3×3 grid numbered 1..9 (row-major). Each value lights
+// a fixed set of those nine slots.
+const PIP_MAP = {
+  1: [5],
+  2: [1, 9],
+  3: [1, 5, 9],
+  4: [1, 3, 7, 9],
+  5: [1, 3, 5, 7, 9],
+  6: [1, 3, 4, 6, 7, 9],
+};
+
+// Cube rotation (degrees [rotateX, rotateY]) that brings each face to the front.
+// Mirrors the face placement in style.css (1 front, 6 back, 2 right, 5 left,
+// 3 top, 4 bottom).
+const DIE_ORIENT = {
+  1: [0, 0],
+  2: [0, -90],
+  3: [-90, 0],
+  4: [90, 0],
+  5: [0, 90],
+  6: [0, 180],
+};
+
+let dieSpin = 0; // ever-increasing full-turn counter so every roll visibly tumbles
+
+// Build the six pip faces inside the cube (once, at boot).
+function buildDie() {
+  els.dieCube.innerHTML = "";
+  for (let value = 1; value <= 6; value++) {
+    const face = document.createElement("div");
+    face.className = "die-face die-face--" + value;
+    for (let slot = 1; slot <= 9; slot++) {
+      const cell = document.createElement("span");
+      cell.className = "pipcell";
+      if (PIP_MAP[value].includes(slot)) {
+        const pip = document.createElement("span");
+        pip.className = "pip";
+        cell.appendChild(pip);
+      }
+      face.appendChild(cell);
+    }
+    els.dieCube.appendChild(face);
+  }
+}
+
+// Spin the cube and land `value` facing the viewer. Each call adds a full extra
+// revolution so repeated values still tumble.
+function rollDieAnim(value) {
+  dieSpin += 1;
+  const [rx, ry] = DIE_ORIENT[value];
+  els.dieCube.style.transform =
+    `rotateX(${rx + 360 * dieSpin}deg) rotateY(${ry + 360 * dieSpin}deg)`;
+  els.dieCube.setAttribute("aria-label", "Die showing " + value);
+}
+
+// Settle the cube to a neutral resting pose (face 1) without a reverse spin.
+function showDieResting() {
+  const [rx, ry] = DIE_ORIENT[1];
+  els.dieCube.style.transform =
+    `rotateX(${rx + 360 * dieSpin}deg) rotateY(${ry + 360 * dieSpin}deg)`;
+  els.dieCube.setAttribute("aria-label", "Die");
+}
 
 // ---- Board geometry (15×15) ----------------------------------------------
 // The 52 ring squares in clockwise order, starting at Red's START. Indexed by
@@ -51,7 +119,8 @@ const YARD_BLOCK_RANGE = 6;
 const els = {
   status: document.getElementById("status"),
   grid: document.getElementById("grid"),
-  die: document.getElementById("die"),
+  dieScene: document.getElementById("dieScene"),
+  dieCube: document.getElementById("dieCube"),
   rollBtn: document.getElementById("rollBtn"),
   turnLabel: document.getElementById("turnLabel"),
   homeLabel: document.getElementById("homeLabel"),
@@ -100,30 +169,50 @@ function paintStatic() {
     }
   }
 
-  // Track ring: pale, with each colour's START tinted and safe squares starred.
+  // Track ring: pale bordered squares, with each colour's START tinted and the
+  // star "safe" squares marked. cell--path draws the gridline border so every
+  // step is individually visible.
   RING.forEach(([r, c], step) => {
     const cell = cellAt.get(r + "," + c);
-    cell.classList.add("cell--track");
+    cell.classList.add("cell--track", "cell--path");
     if (SAFE_SQUARES.has(step)) cell.classList.add("cell--safe");
   });
-  // Tint each colour's START square.
+  // Tint each colour's START square and give it a travel-direction arrow (which
+  // replaces the safe star there, so it reads as the launch square).
+  const START_ARROW = { red: "right", green: "down", yellow: "left", blue: "up" };
   for (const color of COLORS) {
     const [r, c] = RING[START[color]];
     const cell = cellAt.get(r + "," + c);
-    cell.classList.remove("cell--track");
-    cell.classList.add("cell--" + color);
+    cell.classList.remove("cell--track", "cell--safe");
+    cell.classList.add("cell--" + color, "cell--start", "cell--start-" + START_ARROW[color]);
   }
 
-  // Home columns, tinted to the owner.
+  // Home columns, tinted to the owner (also path-bordered).
   for (const color of COLORS) {
     for (const [r, c] of HOME[color]) {
       const cell = cellAt.get(r + "," + c);
       cell.classList.remove("cell--track");
-      cell.classList.add("cell--" + color);
+      cell.classList.add("cell--" + color, "cell--path");
     }
   }
 
-  // Centre finish.
+  // Centre home: four colour triangles converging on the finish, with the four
+  // diagonal corners and the finish itself as a light pad. Each triangle points
+  // inward toward the centre; its colour matches the home column that feeds it.
+  const CENTER_TRI = [
+    { rc: [7, 6], color: "red", dir: "right" },
+    { rc: [6, 7], color: "green", dir: "down" },
+    { rc: [7, 8], color: "yellow", dir: "left" },
+    { rc: [8, 7], color: "blue", dir: "up" },
+  ];
+  for (const { rc, color, dir } of CENTER_TRI) {
+    const cell = cellAt.get(rc[0] + "," + rc[1]);
+    cell.classList.add("cell--center", "cell--homein", "cell--homein-" + dir);
+    cell.style.setProperty("--tri", COLORHEX[color]);
+  }
+  for (const rc of [[6, 6], [6, 8], [8, 6], [8, 8]]) {
+    cellAt.get(rc[0] + "," + rc[1]).classList.add("cell--center");
+  }
   cellAt.get(FINISH_CELL[0] + "," + FINISH_CELL[1]).classList.add("cell--center");
 }
 paintStatic();
@@ -140,6 +229,13 @@ function tokenCell(color, token) {
   if (pos.zone === "track") return RING[pos.step];
   if (pos.zone === "home") return HOME[color][pos.step];
   return FINISH_CELL; // finish
+}
+
+// Grid cell a token would occupy at a given path progress (its move target).
+function destCellFor(color, toProgress) {
+  if (toProgress >= PATH_FINISH) return FINISH_CELL;
+  if (toProgress >= PATH_HOME_ENTRY) return HOME[color][toProgress - PATH_HOME_ENTRY];
+  return RING[(START[color] + toProgress) % TRACK_LEN];
 }
 
 // Find the legal move (if any) whose moving token currently sits on (r,c).
@@ -169,6 +265,7 @@ function startGame() {
   state = "idle";
   legal = [];
   cursorIdx = 0;
+  showDieResting();
   hideOverlay();
   setStatus("Your turn — tap Roll");
   draw();
@@ -186,6 +283,7 @@ function humanRoll() {
 function doRoll(color) {
   const die = engine.roll();
   sound.rotate();
+  rollDieAnim(die);
   draw();
 
   // Third consecutive six forfeits the whole turn.
@@ -378,7 +476,7 @@ input.on((intent) => {
 function draw() {
   // Clear all dynamic classes + discs.
   for (const cell of cellAt.values()) {
-    cell.classList.remove("cell--movable", "cell--cursor");
+    cell.classList.remove("cell--movable", "cell--cursor", "cell--dest", "cell--dest-active");
     // Remove any token/badge children.
     while (cell.firstChild) cell.removeChild(cell.firstChild);
   }
@@ -415,19 +513,25 @@ function draw() {
     }
   }
 
-  // Highlight the human's movable tokens + the keyboard cursor while choosing.
+  // Highlight the human's movable tokens, mark where each can land, and show the
+  // keyboard cursor while choosing.
   if (state === "choosing") {
     legal.forEach((m, i) => {
       const [r, c] = tokenCell(HUMAN, m.token);
       const cell = cellAt.get(r + "," + c);
       cell.classList.add("cell--movable");
       if (i === cursorIdx) cell.classList.add("cell--cursor");
+
+      // Destination square: a ghost ring showing where this token would go.
+      const [dr, dc] = destCellFor(HUMAN, m.toProgress);
+      const dest = cellAt.get(dr + "," + dc);
+      dest.classList.add("cell--dest");
+      if (i === cursorIdx) dest.classList.add("cell--dest-active");
     });
   }
 
-  // Die face + turn tint.
-  els.die.textContent = engine.die ? String(engine.die) : "–";
-  els.die.className = "die die--" + engine.turn;
+  // Die scene turn tint (the cube itself is animated separately on each roll).
+  els.dieScene.className = "die-scene die-scene--" + engine.turn;
 
   // Roll button: enabled only when it's the human's turn to roll.
   const canRoll = started && state === "idle" && engine.turn === HUMAN;
@@ -476,6 +580,8 @@ function toggleMute() {
 // ---- Boot -----------------------------------------------------------------
 function boot() {
   input.start();
+  buildDie();
+  showDieResting();
 
   els.rollBtn.addEventListener("pointerdown", (e) => {
     e.preventDefault();

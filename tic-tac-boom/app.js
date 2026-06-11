@@ -9,9 +9,9 @@
 //     player can take the device before the (live) fuse keeps burning.
 //   - playing: the fuse runs; the holder types a word containing the combo.
 
-import { Engine, buildDictionary, buildCombos } from "./engine.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
-import { Sound } from "../assets/js/shared/sound.js?v=4443a5c2-73e7-4249-a4c0-7e4d5fa64797";
+import { Engine, buildDictionary, buildCombos } from "./engine.js?v=f688c55d-20b3-40af-91a7-aeda20490a06";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=f688c55d-20b3-40af-91a7-aeda20490a06";
+import { Sound } from "../assets/js/shared/sound.js?v=f688c55d-20b3-40af-91a7-aeda20490a06";
 
 const input = new Input();
 const sound = new Sound();
