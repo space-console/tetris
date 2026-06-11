@@ -20,87 +20,52 @@
           <span class="brand__name">Tic-Tac-Boom</span>
         </a>
       </div>
-      <div class="topbar__hint" id="status" aria-live="polite">Loading words…</div>
+      <div class="topbar__hint" id="status" aria-live="polite">Drop bombs · last one standing wins</div>
       <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
     </header>
 
     <main class="stage">
-      <!-- Playfield: the bomb + combo + typing input -->
-      <section class="board" aria-label="Tic-Tac-Boom playfield">
-        <div class="play" id="play">
-          <!-- Whose turn -->
-          <div class="turn" id="turn" aria-live="polite">Player 1</div>
+      <!-- Playfield: the maze is drawn on the canvas. -->
+      <section class="board" aria-label="Bomber maze">
+        <canvas id="board" width="520" height="440"></canvas>
 
-          <!-- The bomb: a pulsing/ticking fuse. No exact seconds are shown. -->
-          <div class="bomb" id="bomb" aria-hidden="true">
-            <div class="bomb__fuse"><span class="bomb__spark"></span></div>
-            <div class="bomb__body">💣</div>
-          </div>
-
-          <!-- The letter combo the holder must put inside a real word -->
-          <div class="combo" id="combo" aria-label="Required letters">··</div>
-
-          <!-- Native text input + submit (uses the phone keyboard) -->
-          <form class="entry" id="entry" autocomplete="off">
-            <input
-              class="entry__input"
-              id="wordInput"
-              type="text"
-              inputmode="text"
-              autocomplete="off"
-              autocapitalize="characters"
-              spellcheck="false"
-              aria-label="Type a word containing the letters"
-              placeholder="type a word…"
-              data-touch-ignore
-            />
-            <button class="entry__go" id="submitBtn" type="submit" data-touch-ignore>Go</button>
-          </form>
-
-          <!-- Per-attempt feedback (accepted / rejected reason) -->
-          <div class="feedback" id="feedback" aria-live="polite">&nbsp;</div>
-        </div>
-
-        <!-- Start menu / pass / game-over overlay -->
+        <!-- Start menu / game-over overlay -->
         <div class="overlay" id="overlay">
           <div class="overlay__card">
             <h1 class="overlay__title" id="overlayTitle">Tic-Tac-Boom</h1>
-            <p class="overlay__msg" id="overlayMsg">Loading words…</p>
-
-            <!-- Start menu: choose players + lives, then start -->
-            <div class="menu menu--hidden" id="menu" role="menu" aria-label="Game options">
-              <div class="opt" role="group" aria-label="Players">
-                <span class="opt__label">Players</span>
-                <div class="opt__choices" id="playersChoices"></div>
-              </div>
-              <div class="opt" role="group" aria-label="Lives">
-                <span class="opt__label">Lives</span>
-                <div class="opt__choices" id="livesChoices"></div>
-              </div>
-              <button class="menu__item menu__item--go" id="startBtn" type="button" role="menuitem" data-touch-ignore>Start game</button>
-            </div>
-
-            <!-- Pass-the-device button between hot-seat turns / after a boom -->
-            <button class="menu__item menu__item--ready menu__item--hidden" id="readyBtn" type="button" data-touch-ignore>Ready</button>
+            <p class="overlay__msg" id="overlayMsg">Bomb the maze. Last bomber standing wins.</p>
+            <button class="ctl ctl--primary" id="startBtn" type="button" data-touch-ignore>Start game</button>
           </div>
         </div>
       </section>
 
-      <!-- Side panel: each player's lives + used-word count -->
+      <!-- Side panel: each bomber's status (lives are single-elimination here). -->
       <aside class="panel" aria-label="Game info">
         <div class="panel__block">
-          <div class="panel__label">Players</div>
+          <div class="panel__label">Bombers</div>
           <ul class="players" id="players"></ul>
         </div>
         <dl class="scoreboard">
-          <div class="score"><dt>Words used</dt><dd id="usedCount">0</dd></div>
+          <div class="score"><dt>Alive</dt><dd id="aliveCount">4</dd></div>
         </dl>
       </aside>
     </main>
 
+    <!-- On-screen D-pad + bomb (touch only; built/handled in app.js). -->
+    <section class="touch-only touch-controls" id="touchControls" aria-label="Touch controls">
+      <div class="dpad" id="dpad">
+        <button class="dbtn dbtn--up" data-dir="up" type="button" data-touch-ignore aria-label="Move up">▲</button>
+        <button class="dbtn dbtn--left" data-dir="left" type="button" data-touch-ignore aria-label="Move left">◀</button>
+        <button class="dbtn dbtn--right" data-dir="right" type="button" data-touch-ignore aria-label="Move right">▶</button>
+        <button class="dbtn dbtn--down" data-dir="down" type="button" data-touch-ignore aria-label="Move down">▼</button>
+      </div>
+      <button class="bombbtn" id="bombBtn" type="button" data-touch-ignore aria-label="Drop bomb">💣</button>
+    </section>
+
     <footer class="hintbar" id="hintbar">
-      <span class="hint"><kbd class="key">A–Z</kbd> Type a word</span>
-      <span class="hint"><kbd class="key">Enter</kbd> Submit</span>
+      <span class="hint"><kbd class="key">↑↓←→</kbd> / <kbd class="key">WASD</kbd> Move</span>
+      <span class="hint"><kbd class="key">Space</kbd> Drop bomb</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Start · Restart</span>
       <span class="hint"><kbd class="key">Back</kbd> Menu</span>
       <span class="hint"><kbd class="key">M</kbd> Mute</span>
     </footer>
