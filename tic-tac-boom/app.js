@@ -356,17 +356,21 @@ input.on((intent) => {
 function boot() {
   input.start();
 
-  // Keyboard: held movement + bomb + mute. We listen directly (the shared layer
-  // can't express press-and-hold) and don't preventDefault so the page stays sane.
+  // Keyboard: held movement + bomb + start/restart. We own these keys entirely in
+  // a CAPTURE-phase listener (runs before the shared Input layer) and stop them
+  // there, so a single keypress can't both start the game AND drop a bomb — the
+  // bug that auto-bombed you on your own spawn the instant you pressed Enter.
+  // Start/restart returns immediately, so it never falls through to dropBomb.
+  const consume = (e) => { e.preventDefault(); e.stopImmediatePropagation(); };
   window.addEventListener("keydown", (e) => {
-    if (e.key === "m" || e.key === "M") { toggleMute(); return; }
-    if (e.key === " " || e.key === "Enter" || e.key === "x" || e.key === "X") {
-      if (state === "playing") { e.preventDefault(); dropBomb(); }
-      return;
-    }
-    const dir = KEY_DIR[e.key];
-    if (dir) { e.preventDefault(); pressDir(dir); }
-  });
+    const k = e.key;
+    if (k === "m" || k === "M") { toggleMute(); consume(e); return; }
+    if (k === "Enter") { if (state !== "playing") startGame(); consume(e); return; }
+    if (k === " ") { if (state === "playing") dropBomb(); else startGame(); consume(e); return; }
+    if (k === "x" || k === "X") { if (state === "playing") dropBomb(); consume(e); return; }
+    const dir = KEY_DIR[k];
+    if (dir) { pressDir(dir); consume(e); }
+  }, true);
   window.addEventListener("keyup", (e) => {
     const dir = KEY_DIR[e.key];
     if (dir) releaseDir(dir);
