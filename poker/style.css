@@ -3,9 +3,14 @@
    the action bar. Sized in vw/vh so it fits a phone in portrait with no
    horizontal overflow. */
 
+/* The action bar lives OUTSIDE the stage (always-visible bottom bar) and the app
+   is locked to viewport height with body scrolling off — so a too-tall table
+   would spill over the actions. Scroll the stage so the table can never overlap
+   them, and keep the table height modest so it fits alongside the chrome. */
 .stage {
   display: block;
   min-height: 0;
+  overflow-y: auto;
 }
 
 /* ---- Table -------------------------------------------------------------- */
@@ -14,7 +19,7 @@
   width: 100%;
   max-width: min(96vw, 900px);
   margin: 0 auto;
-  height: min(74vh, 760px);
+  height: min(62vh, 620px);
   display: grid;
   grid-template-rows: auto 1fr auto;
   gap: calc(var(--u) * 1.2);
@@ -173,8 +178,9 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: calc(var(--u) * 1.2);
-  min-height: calc(var(--u) * 6.5);
+  gap: calc(var(--u) * 1);
+  min-height: calc(var(--u) * 5);
+  padding: calc(var(--u) * 0.4) 0;
 }
 
 /* Raise sizer (label + amount) sits inline with the action buttons. */
