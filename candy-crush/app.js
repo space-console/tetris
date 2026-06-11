@@ -5,9 +5,9 @@
 // adjacent cell to swap). Tracks Score/Target/Moves and shows win + lose
 // overlays. The engine owns all game logic; this file is input + render only.
 
-import { Engine, SIZE } from "./engine.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
-import { Sound } from "../assets/js/shared/sound.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
+import { Engine, SIZE } from "./engine.js?v=521a44b7-8f67-40c8-830a-85e8f9f1c946";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=521a44b7-8f67-40c8-830a-85e8f9f1c946";
+import { Sound } from "../assets/js/shared/sound.js?v=521a44b7-8f67-40c8-830a-85e8f9f1c946";
 
 // Six candy colours, indexed by the engine's colour ids (1..6); 0 = empty
 // (no entry — never shown once a turn settles). Each carries a glyph so the

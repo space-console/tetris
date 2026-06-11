@@ -9,9 +9,9 @@ import {
   WORLD_W, WORLD_H,
   BIRD_X, BIRD_R,
   PIPE_W, FLOOR_Y, GROUND_H,
-} from "./engine.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
-import { Input } from "../assets/js/shared/input.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
-import { Sound } from "../assets/js/shared/sound.js?v=34363f93-4f3e-4afd-b340-1c7db71efa94";
+} from "./engine.js?v=521a44b7-8f67-40c8-830a-85e8f9f1c946";
+import { Input } from "../assets/js/shared/input.js?v=521a44b7-8f67-40c8-830a-85e8f9f1c946";
+import { Sound } from "../assets/js/shared/sound.js?v=521a44b7-8f67-40c8-830a-85e8f9f1c946";
 
 // Browser play wants variety, so feed the engine Math.random rather than the
 // deterministic default seed.

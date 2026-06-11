@@ -300,30 +300,42 @@ export class Engine {
     else if (type === PU_SPEED) p.speed = Math.min(MAX_SPEED, p.speed + SPEED_STEP);
   }
 
-  // Grid-aligned movement: turn only at tile centres, run straight otherwise, and
-  // stop dead at a wall/soft/bomb tile ahead.
+  // Grid-aligned movement: a bomber sits exactly on a tile centre between moves.
+  // It commits to a direction only at a centre (after a walkability check), then
+  // glides to the next centre and snaps there. Because the target tile is checked
+  // before leaving the centre, mid-corridor travel can never enter a wall, and
+  // snapping to exact integers avoids any float drift / jitter.
   _move(p, dt) {
-    const eps = 0.08;
-    const cx = Math.round(p.x), cy = Math.round(p.y);
-    const centered = Math.abs(p.x - cx) < eps && Math.abs(p.y - cy) < eps;
-    const want = p.wantDir;
+    let budget = p.speed * dt;
+    let guard = 0;
+    while (budget > 1e-9 && guard++ < 8) {
+      const ix = Math.round(p.x), iy = Math.round(p.y);
+      const atCenter = Math.abs(p.x - ix) < 1e-9 && Math.abs(p.y - iy) < 1e-9;
 
-    if (centered) {
-      p.x = cx; p.y = cy;
-      p.dir = want && this.walkable(p, cx + DX[want], cy + DY[want]) ? want : null;
-    } else if (want && OPP[want] === p.dir) {
-      p.dir = want; // allow an instant about-face mid-corridor
+      if (atCenter) {
+        p.x = ix; p.y = iy;
+        const want = p.wantDir;
+        p.dir = want && this.walkable(p, ix + DX[want], iy + DY[want]) ? want : null;
+      } else if (p.wantDir && OPP[p.wantDir] === p.dir) {
+        p.dir = p.wantDir; // allow an instant about-face mid-corridor
+      }
+      if (!p.dir) return;
+
+      const d = p.dir;
+      // Distance from here to the next tile centre in direction d.
+      let remaining;
+      if (d === "right") remaining = (Math.floor(p.x) + 1) - p.x;
+      else if (d === "left") remaining = p.x - (Math.ceil(p.x) - 1);
+      else if (d === "down") remaining = (Math.floor(p.y) + 1) - p.y;
+      else remaining = p.y - (Math.ceil(p.y) - 1);
+      if (remaining < 1e-9) remaining = 1; // sitting on a centre, heading out
+
+      const move = Math.min(budget, remaining);
+      p.x += DX[d] * move;
+      p.y += DY[d] * move;
+      budget -= move;
+      if (move >= remaining - 1e-9) { p.x = Math.round(p.x); p.y = Math.round(p.y); }
     }
-    if (!p.dir) return;
-
-    const d = p.dir;
-    let nx = p.x + DX[d] * p.speed * dt;
-    let ny = p.y + DY[d] * p.speed * dt;
-    if (d === "right" && !this.walkable(p, cx + 1, cy)) nx = Math.min(nx, cx);
-    else if (d === "left" && !this.walkable(p, cx - 1, cy)) nx = Math.max(nx, cx);
-    else if (d === "down" && !this.walkable(p, cx, cy + 1)) ny = Math.min(ny, cy);
-    else if (d === "up" && !this.walkable(p, cx, cy - 1)) ny = Math.max(ny, cy);
-    p.x = nx; p.y = ny;
   }
 
   _checkWin(events) {
