@@ -1,0 +1,240 @@
+/* FreeCell-specific layout. Shared chrome (tokens, topbar, overlay, scoreboard,
+   hintbar) lives in ../assets/css/base.css.
+
+   The board is wider than Klondike — 8 tableau columns below, and 8 single-card
+   slots (4 free cells + 4 foundations) across the top row — so the fluid
+   --card-w is tuned to let all eight columns fit a phone in portrait without any
+   horizontal overflow. Columns may get narrow but stay legible. */
+
+.stage {
+  display: grid;
+  place-items: start center;
+  padding: calc(var(--u) * 1);
+  overflow-y: auto;
+}
+
+/* Card metrics: one fluid width drives every card and the fan offset, so the
+   whole board scales together. 8 columns + gaps must fit the table width. */
+:root {
+  --card-w: clamp(40px, 11.5vw, 92px);
+  --card-h: calc(var(--card-w) * 1.4);
+  --fan: calc(var(--card-h) * 0.26);  /* downward overlap step for tableau */
+  --gap: clamp(3px, 1vw, 10px);
+}
+
+.table {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  width: min(98vw, 880px);
+  padding: calc(var(--u) * 1.5);
+  background: rgba(8, 10, 24, 0.72);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0, 0, 0, 0.5);
+}
+
+/* ---- Top row: free cells | foundations ----------------------------------- */
+.top-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--gap);
+}
+.top-row__group {
+  display: flex;
+  gap: var(--gap);
+}
+.foundations { justify-content: flex-end; }
+
+/* ---- Tableau: eight downward-fanning columns ----------------------------- */
+.tableau {
+  display: grid;
+  grid-template-columns: repeat(8, var(--card-w));
+  gap: var(--gap);
+  width: 100%;
+  justify-content: center;
+  align-items: start;
+}
+
+/* ---- Piles / slots ------------------------------------------------------- */
+.pile {
+  position: relative;
+  width: var(--card-w);
+  border-radius: calc(var(--card-w) * 0.12);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+/* Single-card slots (free cell, foundation) reserve exactly one card height. */
+.pile--free,
+.pile--foundation {
+  height: var(--card-h);
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px dashed var(--surface-2);
+  cursor: pointer;
+}
+/* A faint suit-agnostic glyph hints what each empty slot is for. */
+.pile--free::after {
+  content: "·";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--card-w) * 0.6);
+  color: var(--text-dim);
+}
+.pile--free.pile--filled::after { content: none; }
+.pile--foundation::after {
+  content: "A";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--card-w) * 0.42);
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+.pile--foundation.pile--filled::after { content: none; }
+
+/* Tableau column: a min height so empty columns stay tappable, cards stacked
+   with a downward fan. */
+.pile--tableau {
+  min-height: var(--card-h);
+}
+.pile--empty {
+  height: var(--card-h);
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px dashed var(--surface-2);
+  cursor: pointer;
+}
+
+/* The keyboard / remote cursor ring on a whole slot (free/foundation/empty col). */
+.pile--cursor {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+/* A legal destination hint while a source is selected. */
+.pile--target {
+  border-color: var(--good);
+  box-shadow: 0 0 0 2px var(--good);
+}
+
+/* ---- Cards --------------------------------------------------------------- */
+.card {
+  position: relative;
+  width: var(--card-w);
+  height: var(--card-h);
+  background: #f6f7fb;
+  color: #10142b;
+  border: 1px solid #cfd4e6;
+  border-radius: calc(var(--card-w) * 0.12);
+  box-shadow: 0 calc(var(--u) * 0.3) calc(var(--u) * 0.8) rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  overflow: hidden;
+}
+
+/* Corner rank + suit (top-left), with a big centre pip. */
+.card__corner {
+  position: absolute;
+  top: calc(var(--card-w) * 0.06);
+  left: calc(var(--card-w) * 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.card__rank {
+  font-size: calc(var(--card-w) * 0.36);
+  font-weight: 800;
+}
+.card__suit { font-size: calc(var(--card-w) * 0.3); }
+.card__pip {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--card-w) * 0.42);
+  opacity: 0.92;
+}
+
+/* Red suits (♥ ♦). */
+.card--red,
+.card--red .card__rank,
+.card--red .card__suit,
+.card--red .card__pip { color: #d12b3a; }
+
+/* Fanned tableau cards: each overlaps the one above (pulled up by a negative
+   top margin so they cascade downward). */
+.card--fan {
+  margin-top: calc(-1 * var(--card-h) + var(--fan));
+}
+.pile--tableau .card:first-child { margin-top: 0; }
+
+/* Selected card(s): the moving group glows green and lifts. */
+.card--selected {
+  box-shadow: 0 0 0 3px var(--good), 0 calc(var(--u) * 0.4) calc(var(--u) * 1) rgba(0, 0, 0, 0.5);
+  filter: brightness(1.04);
+  z-index: 3;
+}
+
+/* The keyboard cursor ring on a specific card. */
+.card--cursor {
+  box-shadow: 0 0 0 3px var(--focus), 0 calc(var(--u) * 0.4) calc(var(--u) * 1) rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+/* ---- Mouse drag ghost ----------------------------------------------------- */
+/* A floating clone of the grabbed card(s) that follows the cursor during a
+   mouse drag. Pointer-events off so elementFromPoint sees the drop zone, not
+   the ghost. */
+.drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  pointer-events: none;
+  opacity: 0.92;
+  filter: drop-shadow(0 calc(var(--u) * 0.6) calc(var(--u) * 1.2) rgba(0, 0, 0, 0.55));
+  will-change: transform;
+}
+.drag-ghost .card + .card {
+  margin-top: calc(-1 * var(--card-h) + var(--fan));
+}
+/* The grabbed cards lift while a mouse drag is in progress. */
+.card--dragging { opacity: 0.45; }
+
+/* ---- Always-visible primary controls ------------------------------------- */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.4);
+}
+.ctl { min-width: calc(var(--u) * 9); font-size: 1em; }
+.ctl--primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+  font-weight: 800;
+  min-width: calc(var(--u) * 11);
+}
+.ctl--primary:active { transform: scale(0.96); }
+
+/* ---- Responsive: portrait phones ----------------------------------------- */
+@media (max-width: 640px), (orientation: portrait) {
+  :root {
+    --card-w: clamp(32px, 11vw, 58px);
+    --gap: clamp(2px, 0.8vw, 6px);
+  }
+  .table {
+    width: 99vw;
+    padding: calc(var(--u) * 0.8);
+    gap: calc(var(--u) * 1.2);
+  }
+}

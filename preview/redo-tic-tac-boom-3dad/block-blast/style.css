@@ -1,0 +1,135 @@
+/* Block Blast-specific layout. Shared chrome (tokens, topbar, overlay,
+   scoreboard, hintbar, .tbtn) lives in ../assets/css/base.css. */
+
+.stage {
+  grid-template-columns: auto auto;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The board hosts the 8x8 grid + the messaging overlay. */
+.board {
+  position: relative;
+  padding: calc(var(--u) * 1.2);
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+}
+
+/* The 8x8 playfield. Sized so it always fits a portrait phone (board fits the
+   smaller of viewport height/width) yet stays comfortable on desktop/TV. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  gap: 3px;
+  width: min(72vh, 94vw, 520px);
+  height: min(72vh, 94vw, 520px);
+  background: var(--surface-2); /* shows through the gaps as grid lines */
+  border-radius: calc(var(--radius) * 0.6);
+  padding: 3px;
+}
+
+.cell {
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04); /* subtle empty cell */
+  /* Cells own their taps: keep latency low and keep the global gesture layer
+     off the board (they also carry data-touch-ignore in app.js). */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  cursor: pointer;
+  transition: background 60ms linear;
+}
+
+/* A filled cell: piece colour set inline via --fill, with a glossy top sheen. */
+.cell--fill {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 45%),
+    var(--fill, #888);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+/* Live placement preview, painted over the target cells. */
+.cell--ok {
+  background: var(--good, #2ecc71);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+.cell--bad {
+  background: var(--bad, #ff5a5a);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+/* The roaming keyboard/remote cursor: a glowing inset ring. */
+.cell--cursor {
+  box-shadow: inset 0 0 0 calc(var(--u) * 0.32) var(--focus);
+  z-index: 1;
+}
+
+/* ---- Tray ---------------------------------------------------------------- */
+.tray {
+  display: flex;
+  gap: calc(var(--u) * 1);
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* A single tray piece: a tappable mini-grid preview of the polyomino. */
+.tray__piece {
+  display: grid;
+  gap: 2px;
+  padding: calc(var(--u) * 0.8);
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) * 0.5);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* Mini cells sized so the widest pieces still fit the panel. */
+  --mini: clamp(12px, 3.2vmin, 22px);
+}
+.tray__piece[hidden] { display: none; }
+
+/* Selected piece: lit border + slight lift. */
+.tray__piece.is-selected {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 1px var(--focus), 0 0 12px rgba(79, 140, 255, 0.4);
+}
+
+/* A piece that has no legal placement anywhere is dimmed (a hint of trouble). */
+.tray__piece.is-dead { opacity: 0.4; }
+
+.tray__cell {
+  width: var(--mini);
+  height: var(--mini);
+  border-radius: 4px;
+}
+.tray__cell--fill {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0) 45%),
+    var(--fill, #888);
+}
+
+.ctrl { width: 100%; min-height: calc(var(--u) * 4.4); }
+
+/* ---- Responsive: portrait phones ----------------------------------------
+   Stack the panel below the board so the board + tray fit a portrait phone
+   with no horizontal overflow. */
+@media (max-width: 640px), (orientation: portrait) {
+  .stage {
+    grid-auto-flow: row;
+    grid-template-columns: auto;
+    align-content: center;
+    gap: calc(var(--u) * 1.2);
+  }
+
+  .grid { width: min(94vw, 70vh); height: min(94vw, 70vh); }
+
+  .panel { min-width: 0; width: min(94vw, 520px); max-width: 94vw; }
+
+  /* Counters become a compact horizontal strip. */
+  .scoreboard { flex-direction: row; justify-content: center; gap: calc(var(--u) * 1.6); }
+  .score { flex: 1 1 0; flex-direction: column; align-items: center; text-align: center; }
+}
