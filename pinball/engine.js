@@ -159,9 +159,9 @@ export class World {
 
     // Slingshots (lively kickers above each flipper, facing inward).
     this.segments.push({ ax: 36, ay: H - 168, bx: leftPivotX + 10, by: H - 116,
-      restitution: SLING_RESTITUTION, kind: "sling" });
+      restitution: SLING_RESTITUTION, kind: "sling", flash: 0, side: -1 });
     this.segments.push({ ax: laneX - 28, ay: H - 168, bx: rightPivotX - 10, by: H - 116,
-      restitution: SLING_RESTITUTION, kind: "sling" });
+      restitution: SLING_RESTITUTION, kind: "sling", flash: 0, side: 1 });
 
     // Bumpers (round, scoring). Positioned in the upper-mid play area.
     const B = (x, y, r, score) =>
@@ -219,8 +219,9 @@ export class World {
     const events = [];
     for (const f of this.flippers) f.step(dt);
 
-    // Decay bumper flash timers (purely visual; render reads them).
+    // Decay bumper + slingshot flash timers (purely visual; render reads them).
     for (const b of this.bumpers) if (b.flash > 0) b.flash = Math.max(0, b.flash - dt);
+    for (const s of this.segments) if (s.flash > 0) s.flash = Math.max(0, s.flash - dt);
 
     const ball = this.ball;
     if (!ball.live) return events;
@@ -241,7 +242,11 @@ export class World {
       let hit = false;
       for (const seg of this.segments) {
         const ev = this._collideSegment(ball, seg.ax, seg.ay, seg.bx, seg.by, seg.restitution);
-        if (ev) { events.push({ type: seg.kind }); hit = true; }
+        if (ev) {
+          if (seg.kind === "sling") seg.flash = 0.12;
+          events.push({ type: seg.kind });
+          hit = true;
+        }
       }
       for (const f of this.flippers) {
         const [tx, ty] = f.tip();
