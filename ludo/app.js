@@ -123,7 +123,7 @@ const els = {
   dieCube: document.getElementById("dieCube"),
   rollBtn: document.getElementById("rollBtn"),
   turnLabel: document.getElementById("turnLabel"),
-  homeLabel: document.getElementById("homeLabel"),
+  standings: document.getElementById("standings"),
   overlay: document.getElementById("overlay"),
   overlayTitle: document.getElementById("overlayTitle"),
   overlayMsg: document.getElementById("overlayMsg"),
@@ -339,10 +339,11 @@ function applyMove(color, token, die) {
   }
 
   if (res.extraRoll) {
-    // Another roll for the same colour.
+    // Another roll for the same colour. Name the reason for the bonus.
+    const reason = res.captured ? "Captured" : res.finished ? "Token home" : "Rolled a 6";
     if (color === HUMAN) {
       state = "idle";
-      setStatus("Rolled a 6 — roll again");
+      setStatus(`${reason} — roll again`);
       draw();
     } else {
       state = "ai";
@@ -539,11 +540,37 @@ function draw() {
 
   // Side panel.
   els.turnLabel.textContent = engine.winner ? label(engine.winner) : label(engine.turn);
-  els.homeLabel.textContent = homeCount(HUMAN) + "/4";
+  renderStandings();
 }
 
 function homeCount(color) {
   return engine.tokens[color].filter((p) => p >= PATH_FINISH).length;
+}
+
+// Per-player standings: a coloured dot, the player's name, and how many of their
+// four tokens have reached the finish (with a trophy at 4/4).
+function renderStandings() {
+  els.standings.innerHTML = "";
+  for (const color of COLORS) {
+    const row = document.createElement("div");
+    const active = !engine.winner && color === engine.turn;
+    row.className = "standing" + (active ? " standing--active" : "");
+
+    const dot = document.createElement("span");
+    dot.className = "standing__dot standing__dot--" + color;
+
+    const name = document.createElement("span");
+    name.className = "standing__name";
+    name.textContent = color === HUMAN ? "You" : label(color);
+
+    const home = document.createElement("span");
+    home.className = "standing__home";
+    const n = homeCount(color);
+    home.textContent = n === 4 ? "🏆 4/4" : `${n}/4`;
+
+    row.append(dot, name, home);
+    els.standings.appendChild(row);
+  }
 }
 
 // ---- Copy helpers ---------------------------------------------------------
