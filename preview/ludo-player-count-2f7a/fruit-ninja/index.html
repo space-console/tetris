@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Fruit Ninja — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Fruit Ninja</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Drag to slice</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Playfield: fruits fly here, the blade slices them. -->
+      <section class="board" aria-label="Playfield">
+        <canvas id="board" width="400" height="600"></canvas>
+        <!-- Overlay for start / game-over messaging -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Fruit Ninja</h1>
+            <p class="overlay__msg" id="overlayMsg">Drag across the screen to slice. Tap or press <kbd>Enter</kbd> to start</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">Drag</kbd> Slice fruit</span>
+      <span class="hint"><kbd class="key">💣</kbd> Avoid bombs</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Start · Restart</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=9b78118d-6bf2-40cf-88d0-2e8e03fde82b"></script>
+</body>
+</html>

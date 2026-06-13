@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Tic-Tac-Boom — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Tic-Tac-Boom</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Drop bombs · last one standing wins</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Playfield: the maze is drawn on the canvas. -->
+      <section class="board" aria-label="Bomber maze">
+        <canvas id="board" width="520" height="440"></canvas>
+
+        <!-- Start menu / game-over overlay -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Tic-Tac-Boom</h1>
+            <p class="overlay__msg" id="overlayMsg">Bomb the maze. Last bomber standing wins.</p>
+            <button class="ctl ctl--primary" id="startBtn" type="button" data-touch-ignore>Start game</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side panel: each bomber's status (lives are single-elimination here). -->
+      <aside class="panel" aria-label="Game info">
+        <div class="panel__block">
+          <div class="panel__label">Bombers</div>
+          <ul class="players" id="players"></ul>
+        </div>
+        <dl class="scoreboard">
+          <div class="score"><dt>Alive</dt><dd id="aliveCount">4</dd></div>
+        </dl>
+      </aside>
+    </main>
+
+    <!-- On-screen D-pad + bomb (touch only; built/handled in app.js). -->
+    <section class="touch-only touch-controls" id="touchControls" aria-label="Touch controls">
+      <div class="dpad" id="dpad">
+        <button class="dbtn dbtn--up" data-dir="up" type="button" data-touch-ignore aria-label="Move up">▲</button>
+        <button class="dbtn dbtn--left" data-dir="left" type="button" data-touch-ignore aria-label="Move left">◀</button>
+        <button class="dbtn dbtn--right" data-dir="right" type="button" data-touch-ignore aria-label="Move right">▶</button>
+        <button class="dbtn dbtn--down" data-dir="down" type="button" data-touch-ignore aria-label="Move down">▼</button>
+      </div>
+      <button class="bombbtn" id="bombBtn" type="button" data-touch-ignore aria-label="Drop bomb">💣</button>
+    </section>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">↑↓←→</kbd> / <kbd class="key">WASD</kbd> Move</span>
+      <span class="hint"><kbd class="key">Space</kbd> Drop bomb</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Start · Restart</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=9b78118d-6bf2-40cf-88d0-2e8e03fde82b"></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+/* Checkers-specific layout. Shared chrome (tokens, topbar, overlay, scoreboard,
+   hintbar) lives in ../assets/css/base.css. */
+
+.stage {
+  grid-template-columns: auto auto;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The board is a square; cap it to the shorter of viewport height/width so it
+   fits a phone in portrait while still filling a TV. */
+.board {
+  aspect-ratio: 1 / 1;
+  width: min(82vh, 72vw, 760px);
+  height: min(82vh, 72vw, 760px);
+  padding: calc(var(--u) * 1.2);
+}
+
+/* 8×8 board. Squares carry their own light/dark colour, so no gap is needed. */
+.checkgrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 2px var(--surface-2);
+}
+
+.sq {
+  display: grid;
+  place-items: center;
+  position: relative;
+  line-height: 1;
+  user-select: none;
+  /* Squares own their taps: low latency + the global gesture layer ignores them
+     (they also carry data-touch-ignore in app.js). */
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+/* Classic light/dark checker. Pieces only ever sit on the dark squares. */
+.sq--light { background: #e8edf4; }
+.sq--dark { background: #6f8aab; }
+
+/* ---- Pieces: styled discs --------------------------------------------------
+   A disc is drawn with ::before so the king crown (text content) can sit on top
+   centred in the square. */
+.sq--piece::before {
+  content: "";
+  position: absolute;
+  width: 74%;
+  height: 74%;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 calc(var(--u) * -0.5) calc(var(--u) * 0.6) rgba(0, 0, 0, 0.35),
+    inset 0 calc(var(--u) * 0.4) calc(var(--u) * 0.5) rgba(255, 255, 255, 0.25),
+    0 calc(var(--u) * 0.3) calc(var(--u) * 0.5) rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+/* Red side (human, bottom). */
+.sq--red::before {
+  background: radial-gradient(circle at 38% 32%, #ff7a6e, #c8332a 70%);
+  border: calc(var(--u) * 0.35) solid #8e201a;
+}
+/* White side (opponent, top) — rendered as deep slate so it reads on the board. */
+.sq--white::before {
+  background: radial-gradient(circle at 38% 32%, #fbfcff, #b9c4d6 72%);
+  border: calc(var(--u) * 0.35) solid #7c899d;
+}
+
+/* King crown glyph, layered above the disc. */
+.sq--king {
+  font-size: clamp(0.9em, 5.4vmin, 2.4em);
+  line-height: 1;
+}
+.sq--king.sq--red { color: #ffe7b3; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6); }
+.sq--king.sq--white { color: #4a576b; text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5); }
+.sq:not(.sq--king) { font-size: 0; }
+
+/* The roaming cursor: a glowing inset ring on the focused square. */
+.sq--cursor {
+  box-shadow: inset 0 0 0 calc(var(--u) * 0.5) var(--focus);
+  z-index: 2;
+}
+
+/* The selected piece's square. */
+.sq--selected {
+  background: rgba(108, 224, 255, 0.45);
+}
+
+/* Last move's from/to squares. */
+.sq--last {
+  background: rgba(244, 208, 63, 0.40);
+}
+
+/* A piece that MUST capture this turn (mandatory-capture highlight). */
+.sq--must {
+  background: rgba(255, 120, 90, 0.5);
+}
+
+/* Legal target marker: a dot for an empty landing square. Drawn as a ::after
+   overlay so it sits above the square colour but below any glyph. */
+.sq--target::after {
+  content: "";
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: rgba(20, 24, 35, 0.55);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ---- Mode menu (in the overlay card) ------------------------------------- */
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1);
+  margin-top: calc(var(--u) * 1.5);
+}
+.menu__item {
+  font: inherit;
+  font-size: 1.05em;
+  font-weight: 700;
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 2);
+  border-radius: var(--radius);
+  border: 2px solid var(--surface-2);
+  background: rgba(8, 10, 24, 0.6);
+  color: var(--text, #eef);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+/* Hidden when the overlay is reused for the game-over message. */
+.menu--hidden { display: none; }
+
+.menu__item--active,
+.menu__item:hover {
+  background: rgba(108, 224, 255, 0.14);
+  box-shadow: inset 0 0 0 calc(var(--u) * 0.35) var(--focus);
+}
+
+/* ---- Responsive: portrait phones ----------------------------------------
+   Stack the info panel below the board and size the square to fit the screen in
+   both axes, so it never overflows at 360–414px wide. */
+@media (max-width: 640px), (orientation: portrait) {
+  .stage {
+    grid-auto-flow: row;
+    grid-template-columns: auto;
+    align-content: center;
+    gap: calc(var(--u) * 1.4);
+  }
+
+  .board {
+    width: min(82vh, 94vw);
+    height: min(82vh, 94vw);
+    max-width: 94vw;
+    padding: calc(var(--u) * 0.8);
+  }
+
+  .panel {
+    min-width: 0;
+    width: min(82vh, 94vw);
+    max-width: 94vw;
+  }
+  .scoreboard {
+    flex-direction: row;
+    justify-content: center;
+    gap: calc(var(--u) * 1.2);
+  }
+  .score {
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(var(--u) * 0.2);
+    text-align: center;
+  }
+}

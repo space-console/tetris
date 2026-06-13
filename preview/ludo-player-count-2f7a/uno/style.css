@@ -1,0 +1,303 @@
+/* Uno layout. Shared chrome (tokens, topbar, overlay, hintbar) lives in
+   ../assets/css/base.css. This file owns the Uno table, the coloured card
+   chips, the bot seats, the discard/stock pile, the colour chooser, and the
+   action bar. Sized in vw/vh so it fits a phone in portrait with no horizontal
+   overflow. */
+
+.stage {
+  display: block;
+  min-height: 0;
+}
+
+/* ---- Card colour tokens -------------------------------------------------- */
+:root {
+  --uno-red: #e2342f;
+  --uno-yellow: #f2b400;
+  --uno-green: #2eaa46;
+  --uno-blue: #1f6fe0;
+}
+
+/* ---- Table -------------------------------------------------------------- */
+.table {
+  position: relative;
+  width: 100%;
+  max-width: min(96vw, 900px);
+  margin: 0 auto;
+  height: min(76vh, 780px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 1.6);
+  border-radius: calc(var(--radius) * 2);
+  background:
+    radial-gradient(120% 90% at 50% 45%, rgba(40, 50, 120, 0.30), transparent 70%),
+    rgba(8, 12, 28, 0.72);
+  border: 1px solid var(--surface-2);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0, 0, 0, 0.5),
+    inset 0 0 calc(var(--u) * 6) rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+/* ---- Bot seats (top row) ------------------------------------------------ */
+.bots {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: calc(var(--u) * 1);
+}
+.bot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1);
+  border-radius: var(--radius);
+  background: rgba(5, 6, 15, 0.40);
+  border: 1px solid transparent;
+  min-width: calc(var(--u) * 8);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.bot--active {
+  border-color: var(--focus);
+  box-shadow: 0 0 calc(var(--u) * 1.6) rgba(108, 224, 255, 0.45);
+}
+.bot--winner {
+  border-color: var(--good);
+  box-shadow: 0 0 calc(var(--u) * 2) rgba(56, 232, 160, 0.55);
+}
+.bot__name { font-size: 0.9em; font-weight: 700; }
+.bot__count {
+  font-size: 0.78em;
+  color: var(--focus);
+  font-variant-numeric: tabular-nums;
+}
+.bot__fan {
+  display: flex;
+  /* Overlap the backs into a tight fan that won't overflow on phones. */
+  --overlap: calc(var(--u) * -1.3);
+}
+.bot__fan .chip + .chip { margin-left: var(--overlap); }
+
+/* ---- Middle: discard + stock + direction -------------------------------- */
+.middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1);
+}
+.pile {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+}
+.discard {
+  display: grid;
+  place-items: center;
+  padding: calc(var(--u) * 0.5);
+  border-radius: calc(var(--u) * 1.4);
+  border: calc(var(--u) * 0.4) solid transparent;
+}
+/* The ring colour reflects the active colour (a wild can change it). */
+.discard--red { border-color: var(--uno-red); }
+.discard--yellow { border-color: var(--uno-yellow); }
+.discard--green { border-color: var(--uno-green); }
+.discard--blue { border-color: var(--uno-blue); }
+
+.stock {
+  position: relative;
+  width: calc(var(--u) * 5);
+  height: calc(var(--u) * 7.2);
+  border-radius: calc(var(--u) * 0.9);
+  background:
+    repeating-linear-gradient(45deg, #1b2150, #1b2150 6px, #2b3478 6px, #2b3478 12px);
+  border: 2px solid #3a4690;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  box-shadow: 0 calc(var(--u) * 0.5) calc(var(--u) * 1.2) rgba(0, 0, 0, 0.5);
+}
+.stock:active { transform: scale(0.96); }
+.stock__count {
+  position: absolute;
+  inset: auto 50% -0.2em;
+  transform: translate(50%, 100%);
+  font-size: 0.72em;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.dir {
+  font-size: 0.85em;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+/* ---- Your hand (bottom row) --------------------------------------------- */
+.you {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.5);
+  padding-top: calc(var(--u) * 0.6);
+  max-height: calc(var(--u) * 18);
+  overflow-y: auto;
+}
+.handcard {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  border-radius: calc(var(--u) * 0.9);
+  transition: transform 100ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+/* Cards you can legally play sit normally; the rest dim back. */
+.handcard--dim { filter: grayscale(0.5) brightness(0.62); }
+.handcard--playable { filter: none; }
+.handcard--cursor {
+  transform: translateY(calc(var(--u) * -0.9));
+  box-shadow: 0 0 0 calc(var(--u) * 0.4) var(--focus);
+}
+.handcard--drawn .chip { outline: calc(var(--u) * 0.3) solid var(--good); }
+.handcard:active { transform: scale(0.97); }
+
+/* ---- Card chips (shared face for hand + discard) ------------------------ */
+.chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 5);
+  height: calc(var(--u) * 7.2);
+  border-radius: calc(var(--u) * 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  color: #fff;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 calc(var(--u) * 0.4) calc(var(--u) * 0.9) rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.chip__face {
+  position: relative;
+  z-index: 1;
+  font-size: calc(var(--u) * 2.6);
+  text-shadow: 0 calc(var(--u) * 0.15) calc(var(--u) * 0.3) rgba(0, 0, 0, 0.45);
+}
+.chip--small {
+  width: calc(var(--u) * 3.2);
+  height: calc(var(--u) * 4.6);
+}
+.chip--small .chip__face { font-size: calc(var(--u) * 1.5); }
+
+.chip--red { background: var(--uno-red); }
+.chip--yellow { background: var(--uno-yellow); color: #3a2a00; }
+.chip--green { background: var(--uno-green); }
+.chip--blue { background: var(--uno-blue); }
+
+/* Wild cards: four colour quadrants behind a star/+4 glyph. */
+.chip--wild { background: #15151c; }
+.chip__quad {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, var(--uno-red) 0 50%, transparent 50%),
+    linear-gradient(225deg, var(--uno-yellow) 0 50%, transparent 50%),
+    linear-gradient(45deg, var(--uno-green) 0 50%, transparent 50%),
+    linear-gradient(315deg, var(--uno-blue) 0 50%, transparent 50%);
+  background-blend-mode: normal;
+}
+.chip--wild .chip__face { color: #fff; }
+
+/* Card back (opponent fans + the look matches the stock). */
+.chip--back {
+  background:
+    repeating-linear-gradient(45deg, #1b2150, #1b2150 5px, #2b3478 5px, #2b3478 10px);
+  border-color: #3a4690;
+}
+
+.chip--top { transform: scale(1.02); }
+
+/* ---- Colour chooser (inside the overlay card) --------------------------- */
+.chooser {
+  display: none;
+  justify-content: center;
+  gap: calc(var(--u) * 1.4);
+  margin-top: calc(var(--u) * 2);
+}
+.chooser--open { display: flex; }
+.chooser__swatch {
+  width: calc(var(--u) * 6);
+  height: calc(var(--u) * 6);
+  border-radius: calc(var(--u) * 1.2);
+  border: calc(var(--u) * 0.4) solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 100ms ease, border-color 120ms ease;
+}
+.chooser__swatch--red { background: var(--uno-red); }
+.chooser__swatch--yellow { background: var(--uno-yellow); }
+.chooser__swatch--green { background: var(--uno-green); }
+.chooser__swatch--blue { background: var(--uno-blue); }
+.chooser__swatch--sel {
+  border-color: var(--text);
+  transform: scale(1.12);
+  box-shadow: 0 0 calc(var(--u) * 2) rgba(255, 255, 255, 0.5);
+}
+.chooser__swatch:active { transform: scale(0.96); }
+
+/* ---- Action bar --------------------------------------------------------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  min-height: calc(var(--u) * 6.5);
+}
+.abtn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none; user-select: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: calc(var(--u) * 9);
+  min-height: calc(var(--u) * 5.5);
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.8);
+  font-size: 1.05em; font-weight: 800; line-height: 1;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 80ms ease, border-color 120ms ease, background 120ms ease;
+}
+.abtn:active { transform: scale(0.96); background: var(--surface-2); }
+.abtn:disabled { opacity: 0.3; cursor: default; }
+.abtn--draw { border-color: rgba(108, 224, 255, 0.6); }
+.abtn--pass { border-color: rgba(154, 163, 199, 0.6); }
+.abtn--primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+  font-weight: 800;
+  min-width: calc(var(--u) * 12);
+}
+
+/* ---- Responsive: portrait phones ---------------------------------------- */
+@media (max-width: 640px), (orientation: portrait) {
+  .table {
+    height: auto;
+    min-height: min(66vh, 580px);
+    max-width: 96vw;
+    padding: calc(var(--u) * 1);
+  }
+  .bots { flex-wrap: nowrap; gap: calc(var(--u) * 0.5); }
+  .bot { min-width: 0; padding: calc(var(--u) * 0.5); }
+  .bot__fan { --overlap: calc(var(--u) * -1.7); }
+  .pile { gap: calc(var(--u) * 1.2); }
+  .you { max-height: calc(var(--u) * 16); }
+  .abtn { min-width: calc(var(--u) * 7); flex: 1 1 auto; }
+  .actions { gap: calc(var(--u) * 0.8); }
+}

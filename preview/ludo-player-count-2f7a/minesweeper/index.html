@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Minesweeper — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Minesweeper</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Tap or click a cell to start</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Board: a DOM grid of cells with a roaming cursor, populated in app.js. -->
+      <section class="board" aria-label="Minefield">
+        <div class="board__scroll">
+          <div class="grid" id="grid" role="grid" aria-label="Minefield grid"></div>
+        </div>
+        <!-- Overlay for start / win / game-over messaging -->
+        <div class="overlay overlay--hidden" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Minesweeper</h1>
+            <p class="overlay__msg" id="overlayMsg">Tap a cell to start</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side panel: counters + controls -->
+      <aside class="panel" aria-label="Game info">
+        <dl class="scoreboard">
+          <div class="score"><dt>Mines</dt><dd id="mines">10</dd></div>
+          <div class="score"><dt>Time</dt><dd id="time">0</dd></div>
+        </dl>
+
+        <div class="panel__block controls" aria-label="Controls">
+          <button class="tbtn ctrl ctrl--wide" id="newGame" type="button" data-touch-ignore>New game</button>
+          <button class="tbtn ctrl ctrl--wide" id="flagMode" type="button" data-touch-ignore aria-pressed="false">🚩 Flag: Off</button>
+          <div class="diffs" role="group" aria-label="Difficulty">
+            <button class="tbtn ctrl diff is-active" id="diffBeginner" type="button" data-touch-ignore>Beginner</button>
+            <button class="tbtn ctrl diff" id="diffIntermediate" type="button" data-touch-ignore>Intermediate</button>
+            <button class="tbtn ctrl diff" id="diffExpert" type="button" data-touch-ignore>Expert</button>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">←↑↓→</kbd> Move</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Reveal</span>
+      <span class="hint"><kbd class="key">F</kbd> Flag</span>
+      <span class="hint"><kbd class="key">N</kbd> New game</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=9b78118d-6bf2-40cf-88d0-2e8e03fde82b"></script>
+</body>
+</html>

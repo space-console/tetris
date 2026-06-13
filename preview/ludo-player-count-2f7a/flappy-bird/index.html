@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Flappy Bird — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Flappy Bird</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Press Enter to flap</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Playfield: a tall portrait sky -->
+      <section class="board" aria-label="Playfield">
+        <canvas id="board" width="400" height="700"></canvas>
+        <!-- Overlay for start / game-over messaging -->
+        <div class="overlay" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Flappy Bird</h1>
+            <p class="overlay__msg" id="overlayMsg">Tap or press <kbd>Space</kbd> to flap</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side panel: scoreboard -->
+      <aside class="panel" aria-label="Game info">
+        <dl class="scoreboard">
+          <div class="score"><dt>Score</dt><dd id="score">0</dd></div>
+          <div class="score"><dt>Best</dt><dd id="best">0</dd></div>
+        </dl>
+      </aside>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">Space</kbd> Flap</span>
+      <span class="hint"><kbd class="key">↑</kbd> Flap</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Start · Flap</span>
+      <span class="hint"><kbd class="key">Tap</kbd> Flap</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=9b78118d-6bf2-40cf-88d0-2e8e03fde82b"></script>
+</body>
+</html>
