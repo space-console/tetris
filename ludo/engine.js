@@ -27,6 +27,14 @@
 
 export const COLORS = ["red", "green", "yellow", "blue"];
 
+// Which colours are in play for a given player count. The human is always Red
+// (colours[0]). Two players sit opposite each other (Red/Yellow); three drop Blue.
+export const PLAYER_SETS = {
+  2: ["red", "yellow"],
+  3: ["red", "green", "yellow"],
+  4: ["red", "green", "yellow", "blue"],
+};
+
 // Ring index of each colour's START square (classic layout, clockwise). Red
 // starts bottom-left-ish; the four are spaced 13 apart around the 52-ring.
 export const START = { red: 0, green: 13, yellow: 26, blue: 39 };
@@ -70,12 +78,15 @@ export class Engine {
     this.reset(seed);
   }
 
-  reset(seed = (Math.random() * 2 ** 32) >>> 0) {
+  reset(seed, numPlayers = this.numPlayers || 4) {
+    if (seed === undefined) seed = (Math.random() * 2 ** 32) >>> 0;
     this._rng = mulberry32(seed);
+    this.numPlayers = numPlayers;
+    this.colors = PLAYER_SETS[numPlayers] || COLORS;  // the colours actually in play
     // tokens[color] = array of 4 progress values; -1 means "in the yard".
     this.tokens = {};
-    for (const c of COLORS) this.tokens[c] = [-1, -1, -1, -1];
-    this.turn = "red";          // whose turn it is
+    for (const c of this.colors) this.tokens[c] = [-1, -1, -1, -1];
+    this.turn = this.colors[0]; // Red always starts (the human)
     this.die = null;            // last rolled die value (1..6), or null
     this.sixStreak = 0;         // consecutive 6s this turn (forfeit at 3)
     this.winner = null;         // colour that has finished all 4, or null
@@ -155,7 +166,7 @@ export class Engine {
     if (SAFE_SQUARES.has(ring)) return null;        // safe square: no capture
     let foundColor = null;
     let count = 0;
-    for (const other of COLORS) {
+    for (const other of this.colors) {
       if (other === color) continue;
       for (let t = 0; t < 4; t++) {
         const p = this.tokens[other][t];
@@ -215,8 +226,8 @@ export class Engine {
 
   // Advance to the next colour's turn (clockwise), resetting per-turn die state.
   nextTurn() {
-    const i = COLORS.indexOf(this.turn);
-    this.turn = COLORS[(i + 1) % COLORS.length];
+    const i = this.colors.indexOf(this.turn);
+    this.turn = this.colors[(i + 1) % this.colors.length];
     this.die = null;
     this.sixStreak = 0;
     this.awaitingMove = false;

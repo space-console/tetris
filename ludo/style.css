@@ -365,3 +365,32 @@
   color: var(--focus);
   white-space: nowrap;
 }
+
+/* ---- Start-menu: player-count chooser ------------------------------------ */
+.pcount {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1);
+  margin-top: calc(var(--u) * 2);
+}
+.pcount__btn {
+  font: inherit;
+  font-weight: 800;
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.8);
+  border-radius: var(--radius);
+  border: 2px solid var(--surface-2);
+  background: rgba(108, 224, 255, 0.08);
+  color: var(--text);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 120ms ease, background 120ms ease, transform 80ms ease;
+}
+.pcount__btn:hover { background: rgba(108, 224, 255, 0.16); }
+.pcount__btn:active { transform: scale(0.96); }
+.pcount__btn--active {
+  border-color: var(--focus);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 calc(var(--u) * 1.4) rgba(108, 224, 255, 0.5);
+}

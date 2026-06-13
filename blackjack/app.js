@@ -13,10 +13,10 @@ import {
   rankLabel,
   handValue,
   MIN_BET,
-} from "./engine.js?v=62505fea-be99-4f1f-8de5-ca00c59bf70b";
-import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=62505fea-be99-4f1f-8de5-ca00c59bf70b";
-import { mountButtons } from "../assets/js/shared/touch.js?v=62505fea-be99-4f1f-8de5-ca00c59bf70b";
-import { Sound } from "../assets/js/shared/sound.js?v=62505fea-be99-4f1f-8de5-ca00c59bf70b";
+} from "./engine.js?v=9fa42cb0-cff6-42c8-b3d6-39334e207fcd";
+import { Input, isTouchDevice } from "../assets/js/shared/input.js?v=9fa42cb0-cff6-42c8-b3d6-39334e207fcd";
+import { mountButtons } from "../assets/js/shared/touch.js?v=9fa42cb0-cff6-42c8-b3d6-39334e207fcd";
+import { Sound } from "../assets/js/shared/sound.js?v=9fa42cb0-cff6-42c8-b3d6-39334e207fcd";
 
 const engine = new Engine();
 const input = new Input();
