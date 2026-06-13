@@ -1,0 +1,247 @@
+/* Texas Hold'em layout. Shared chrome (tokens, topbar, overlay, hintbar) lives
+   in ../assets/css/base.css. This file owns the poker table, cards, seats and
+   the action bar. Sized in vw/vh so it fits a phone in portrait with no
+   horizontal overflow. */
+
+/* The action bar lives OUTSIDE the stage (always-visible bottom bar) and the app
+   is locked to viewport height with body scrolling off — so a too-tall table
+   would spill over the actions. Scroll the stage so the table can never overlap
+   them, and keep the table height modest so it fits alongside the chrome. */
+.stage {
+  display: block;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* ---- Table -------------------------------------------------------------- */
+.table {
+  position: relative;
+  width: 100%;
+  max-width: min(96vw, 900px);
+  margin: 0 auto;
+  height: min(62vh, 620px);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 1.6);
+  border-radius: calc(var(--radius) * 2);
+  background:
+    radial-gradient(120% 90% at 50% 40%, rgba(46, 139, 87, 0.30), transparent 70%),
+    rgba(8, 24, 16, 0.72);
+  border: 1px solid var(--surface-2);
+  box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 5) rgba(0, 0, 0, 0.5),
+    inset 0 0 calc(var(--u) * 6) rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.seats-top {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  gap: calc(var(--u) * 1);
+}
+
+.middle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1.4);
+}
+
+.seat-you {
+  display: flex;
+  justify-content: center;
+}
+
+/* ---- Pot --------------------------------------------------------------- */
+.pot {
+  font-size: 1.1em;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--focus);
+  background: rgba(5, 6, 15, 0.55);
+  border: 1px solid var(--surface-2);
+  border-radius: 999px;
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 1.6);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Seats ------------------------------------------------------------- */
+.seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.5);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1);
+  border-radius: var(--radius);
+  background: rgba(5, 6, 15, 0.40);
+  border: 1px solid transparent;
+  min-width: calc(var(--u) * 8);
+  transition: border-color 140ms ease, opacity 140ms ease;
+}
+.seat--active {
+  border-color: var(--focus);
+  box-shadow: 0 0 calc(var(--u) * 1.6) rgba(108, 224, 255, 0.45);
+}
+.seat--folded { opacity: 0.4; }
+.seat--winner {
+  border-color: var(--good);
+  box-shadow: 0 0 calc(var(--u) * 2) rgba(56, 232, 160, 0.55);
+}
+
+.seat__name { font-size: 0.85em; font-weight: 700; }
+.seat__chips {
+  font-size: 0.82em;
+  color: var(--focus);
+  font-variant-numeric: tabular-nums;
+}
+.seat__dealer {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.5em; height: 1.5em;
+  margin-left: 0.3em;
+  border-radius: 999px;
+  background: var(--text); color: var(--bg);
+  font-size: 0.65em; font-weight: 800;
+}
+.seat__action {
+  min-height: 1.3em;
+  font-size: 0.72em;
+  color: var(--text-dim);
+  text-align: center;
+}
+.seat__bet {
+  font-size: 0.74em;
+  font-weight: 700;
+  color: #f4d03f;
+  min-height: 1.1em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The human seat is a touch wider with bigger cards. */
+.seat-you .seat { min-width: calc(var(--u) * 12); }
+
+/* ---- Cards ------------------------------------------------------------- */
+.cards { display: flex; gap: calc(var(--u) * 0.6); }
+
+.card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 4.2);
+  height: calc(var(--u) * 6);
+  border-radius: calc(var(--u) * 0.7);
+  background: #f7f8fc;
+  color: #14122b;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 calc(var(--u) * 0.4) calc(var(--u) * 0.8) rgba(0, 0, 0, 0.4);
+}
+.card__rank { font-size: calc(var(--u) * 2); }
+.card__suit { font-size: calc(var(--u) * 1.8); }
+.card--red { color: #d6224c; }
+
+/* Face-down opponent cards. */
+.card--back {
+  background:
+    repeating-linear-gradient(45deg, #1b2150, #1b2150 6px, #2b3478 6px, #2b3478 12px);
+  color: transparent;
+  border: 1px solid #3a4690;
+}
+
+/* Community + your hole cards are a little larger. */
+.community .card,
+.seat-you .card {
+  width: calc(var(--u) * 5);
+  height: calc(var(--u) * 7.2);
+}
+.community .card .card__rank,
+.seat-you .card .card__rank { font-size: calc(var(--u) * 2.4); }
+.community .card .card__suit,
+.seat-you .card .card__suit { font-size: calc(var(--u) * 2.1); }
+
+.community { min-height: calc(var(--u) * 7.2); align-items: center; }
+
+.card--placeholder {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed var(--surface-2);
+  box-shadow: none;
+}
+
+/* Highlight the five cards making the winning hand at showdown. */
+.card--best { outline: calc(var(--u) * 0.35) solid var(--good); outline-offset: -1px; }
+
+/* ---- Action bar -------------------------------------------------------- */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+  min-height: calc(var(--u) * 5);
+  padding: calc(var(--u) * 0.4) 0;
+}
+
+/* Raise sizer (label + amount) sits inline with the action buttons. */
+.raise-sizer {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.9);
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+}
+.raise-sizer__label { font-size: 0.7em; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+.raise-sizer__amount { font-weight: 800; color: var(--focus); font-variant-numeric: tabular-nums; min-width: 3.5em; text-align: center; }
+
+.abtn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none; user-select: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: calc(var(--u) * 8);
+  min-height: calc(var(--u) * 5.5);
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.6);
+  font-size: 1.05em; font-weight: 800; line-height: 1;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 80ms ease, border-color 120ms ease, background 120ms ease;
+}
+.abtn:active { transform: scale(0.96); background: var(--surface-2); }
+.abtn--fold { border-color: rgba(255, 90, 90, 0.5); }
+.abtn--call { border-color: rgba(56, 232, 160, 0.5); }
+.abtn--raise { border-color: rgba(244, 208, 63, 0.5); }
+.abtn--allin { border-color: rgba(177, 75, 255, 0.6); }
+/* Keyboard-highlighted action (desktop arrow selection). */
+.abtn--selected {
+  border-color: var(--focus);
+  box-shadow: 0 0 calc(var(--u) * 1.4) rgba(108, 224, 255, 0.5);
+}
+.abtn:disabled { opacity: 0.3; cursor: default; }
+
+/* The mini +/- buttons inside the raise sizer. */
+.abtn--step {
+  min-width: calc(var(--u) * 4);
+  min-height: calc(var(--u) * 4);
+  padding: 0;
+  font-size: 1.2em;
+}
+
+/* ---- Responsive: portrait phones --------------------------------------- */
+@media (max-width: 640px), (orientation: portrait) {
+  .table {
+    height: auto;
+    min-height: min(64vh, 560px);
+    max-width: 96vw;
+  }
+  .seats-top { flex-wrap: nowrap; }
+  .seat { min-width: 0; padding: calc(var(--u) * 0.6); }
+  .seat-you .seat { min-width: 0; }
+  .abtn { min-width: calc(var(--u) * 7); flex: 1 1 auto; }
+  .actions { gap: calc(var(--u) * 0.8); }
+}

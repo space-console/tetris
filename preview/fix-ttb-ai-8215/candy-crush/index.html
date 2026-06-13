@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- TV browsers default to a desktop-width viewport; pin to device width and lock zoom for the 10-foot UI. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#05060f" />
+  <title>Candy Crush — Space Console</title>
+  <link rel="manifest" href="../manifest.json" />
+  <link rel="stylesheet" href="../assets/css/base.css" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- safe-area wrapper protects against TV overscan; see --safe-* in base.css -->
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <a href="../" aria-label="Back to games">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__name">Candy Crush</span>
+        </a>
+      </div>
+      <div class="topbar__hint" id="status" aria-live="polite">Match 3 or more candies</div>
+      <button class="mute" id="mute" type="button" aria-pressed="false" aria-label="Toggle sound" title="Toggle sound (M)">🔊</button>
+    </header>
+
+    <main class="stage">
+      <!-- Board: an 8x8 DOM grid of candies with a roaming cursor + selection,
+           populated in app.js. -->
+      <section class="board" aria-label="Board">
+        <div class="grid" id="grid" role="grid" aria-label="Candy grid"></div>
+        <!-- Overlay for win / lose messaging -->
+        <div class="overlay overlay--hidden" id="overlay">
+          <div class="overlay__card">
+            <h1 class="overlay__title" id="overlayTitle">Candy Crush</h1>
+            <p class="overlay__msg" id="overlayMsg">Tap a candy to start</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Side panel: scoreboard + New game -->
+      <aside class="panel" aria-label="Game info">
+        <dl class="scoreboard">
+          <div class="score"><dt>Score</dt><dd id="score">0</dd></div>
+          <div class="score"><dt>Target</dt><dd id="target">1000</dd></div>
+          <div class="score"><dt>Moves</dt><dd id="moves">20</dd></div>
+        </dl>
+
+        <button class="tbtn ctrl" id="newGame" type="button" data-touch-ignore>New game</button>
+      </aside>
+    </main>
+
+    <footer class="hintbar" id="hintbar">
+      <span class="hint"><kbd class="key">←↑↓→</kbd> Move</span>
+      <span class="hint"><kbd class="key">Enter</kbd> Select / swap</span>
+      <span class="hint"><kbd class="key">N</kbd> New game</span>
+      <span class="hint"><kbd class="key">Back</kbd> Menu</span>
+      <span class="hint"><kbd class="key">M</kbd> Mute</span>
+    </footer>
+  </div>
+
+  <script type="module" src="./app.js?v=175f583e-3f62-43ec-8059-9980fdac431b"></script>
+</body>
+</html>
