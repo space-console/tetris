@@ -127,12 +127,26 @@ const els = {
   overlay: document.getElementById("overlay"),
   overlayTitle: document.getElementById("overlayTitle"),
   overlayMsg: document.getElementById("overlayMsg"),
+  pcount: document.getElementById("pcount"),
   mute: document.getElementById("mute"),
 };
+
+// ---- Start-menu player count ----------------------------------------------
+function setCount(n) {
+  numPlayers = Math.max(2, Math.min(4, n));
+  renderMenu();
+}
+function renderMenu() {
+  if (!els.pcount) return;
+  for (const btn of els.pcount.querySelectorAll(".pcount__btn")) {
+    btn.classList.toggle("pcount__btn--active", Number(btn.dataset.n) === numPlayers);
+  }
+}
 
 // idle | rolling | choosing | ai | over
 let state = "idle";
 let started = false;
+let numPlayers = 4;    // chosen on the start menu: 2, 3, or 4 (you + AI)
 let legal = [];        // legal moves for the human's current die
 let cursorIdx = 0;     // index into `legal` for the keyboard cursor
 
@@ -260,7 +274,7 @@ function tapCell(r, c) {
 function startGame() {
   sound.resume();   // first interaction unlocks audio (autoplay policy)
   sound.start();
-  engine.reset();
+  engine.reset(undefined, numPlayers);
   started = true;
   state = "idle";
   legal = [];
@@ -440,6 +454,8 @@ function endGame(color) {
 input.on((intent) => {
   if (!started) {
     if (intent === "back") { location.href = "../"; return; }
+    if (intent === "left") { setCount(numPlayers - 1); return; }
+    if (intent === "right") { setCount(numPlayers + 1); return; }
     if (intent === "enter") { startGame(); return; }
     return;
   }
@@ -447,6 +463,8 @@ input.on((intent) => {
   if (intent === "back") { location.href = "../"; return; }
 
   if (state === "over") {
+    if (intent === "left") { setCount(numPlayers - 1); return; }
+    if (intent === "right") { setCount(numPlayers + 1); return; }
     if (intent === "enter") startGame();
     return;
   }
@@ -482,9 +500,9 @@ function draw() {
     while (cell.firstChild) cell.removeChild(cell.firstChild);
   }
 
-  // Group tokens by cell so we can show stack counts.
+  // Group tokens by cell so we can show stack counts (active colours only).
   const byCell = new Map(); // "r,c" -> [{color, token}]
-  for (const color of COLORS) {
+  for (const color of engine.colors) {
     for (let token = 0; token < 4; token++) {
       const [r, c] = tokenCell(color, token);
       const key = r + "," + c;
@@ -551,7 +569,7 @@ function homeCount(color) {
 // four tokens have reached the finish (with a trophy at 4/4).
 function renderStandings() {
   els.standings.innerHTML = "";
-  for (const color of COLORS) {
+  for (const color of engine.colors) {
     const row = document.createElement("div");
     const active = !engine.winner && color === engine.turn;
     row.className = "standing" + (active ? " standing--active" : "");
@@ -616,6 +634,16 @@ function boot() {
     humanRoll();
   });
 
+  // Player-count buttons: tap one to start a game with that many players.
+  for (const btn of els.pcount.querySelectorAll(".pcount__btn")) {
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      setCount(Number(btn.dataset.n));
+      startGame();
+    });
+  }
+  renderMenu();
+
   els.mute.addEventListener("click", toggleMute);
   // Mute is a meta control (M key), handled outside the gameplay intent layer.
   window.addEventListener("keydown", (e) => {
@@ -623,7 +651,9 @@ function boot() {
   });
 
   draw();             // render the empty board behind the start overlay
-  showOverlay("Ludo", isTouchDevice() ? "Tap to start (you are Red)" : "Press Enter to start (you are Red)");
+  showOverlay("Ludo", isTouchDevice()
+    ? "Choose players (you are Red), then tap one to start"
+    : "Choose players with ←/→, then Enter (you are Red)");
   setStatus(isTouchDevice() ? "Tap to start" : "Press Enter to start");
 }
 
