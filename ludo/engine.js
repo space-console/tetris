@@ -199,9 +199,14 @@ export class Engine {
     const won = this.hasWon(color);
     if (won) this.winner = color;
 
-    // Extra roll: rolling a 6 (and not the forfeiting third six) grants another
-    // turn. Capturing or finishing do NOT grant an extra roll in this variant.
-    const extraRoll = !won && die === 6 && this.sixStreak < 3;
+    // Extra roll (standard Ludo): you get another turn for rolling a 6 (unless
+    // it's the forfeiting third six), for capturing an opponent, or for sending a
+    // token home to the finish.
+    const extraRoll = !won && (
+      (die === 6 && this.sixStreak < 3) ||
+      captured !== null ||
+      finished
+    );
 
     this.die = null;
     this.awaitingMove = false;

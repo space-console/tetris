@@ -322,4 +322,46 @@
     gap: calc(var(--u) * 0.2);
     text-align: center;
   }
+  /* On phones the standings sit in a row to save vertical space. */
+  .standings { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  .standing { flex: 1 1 auto; }
+}
+
+/* ---- Per-player standings (tokens home) ---------------------------------- */
+.standings {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.5);
+  margin-top: calc(var(--u) * 1.4);
+}
+.standing {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 0.9);
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+}
+.standing--active {
+  border-color: var(--focus);
+  box-shadow: 0 0 calc(var(--u) * 1.2) rgba(108, 224, 255, 0.4);
+}
+.standing__dot {
+  width: calc(var(--u) * 1.5);
+  height: calc(var(--u) * 1.5);
+  border-radius: 50%;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+.standing__dot--red { background: #e23b4e; }
+.standing__dot--green { background: #2fb86b; }
+.standing__dot--yellow { background: #e7b53b; }
+.standing__dot--blue { background: #3b7de2; }
+.standing__name { font-weight: 700; flex: 1 1 auto; }
+.standing__home {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--focus);
+  white-space: nowrap;
 }

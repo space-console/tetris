@@ -362,10 +362,17 @@ export class Engine {
       return;
     }
 
-    if (p.bombsActive < p.maxBombs && this._worthBombing(p, c, r)) {
+    // Don't pile a bomb next to an existing one — that's how bombers chain-blast
+    // themselves and each other into mutual destruction. Hold off if a bomb is
+    // already close.
+    const crowded = this.bombs.some((b) => Math.abs(b.col - c) + Math.abs(b.row - r) <= 2);
+    if (!crowded && p.bombsActive < p.maxBombs && this._worthBombing(p, c, r)) {
       const after = this._blastTilesFor(c, r, p.range);
-      const avoid = new Set([...danger, ...after]);
-      const escape = this._bfsStep(p, (cc, rr) => !after.has(key(cc, rr)) && !danger.has(key(cc, rr)), avoid);
+      // Escape route: reach any tile OUTSIDE this bomb's blast. We may run along
+      // the bomb's own blast tiles to get clear (it hasn't exploded yet); we only
+      // refuse to path through EXISTING danger (other live bombs / flames).
+      const escape = this._bfsStep(
+        p, (cc, rr) => !after.has(key(cc, rr)) && !danger.has(key(cc, rr)), danger);
       if (escape) {
         this.placeBomb(p.id);
         p.wantDir = escape;
@@ -424,9 +431,14 @@ export class Engine {
   }
 
   _worthBombing(p, c, r) {
+    // Always worth opening a path: a soft block right next to us.
     for (const [dc, dr] of NEI) if (this.cell(c + dc, r + dr) === SOFT) return true;
+    // Attack an enemy only when it's CLOSE (not just anywhere down a long open
+    // corridor) — that keeps the early game about opening paths and makes combat
+    // happen as bombers actually close in, instead of an instant crossfire.
+    const reach = Math.min(p.range, 2);
     for (const [dc, dr] of NEI) {
-      for (let s = 1; s <= p.range; s++) {
+      for (let s = 1; s <= reach; s++) {
         const cc = c + dc * s, rr = r + dr * s, cv = this.cell(cc, rr);
         if (cv === WALL || cv === SOFT) break;
         if (this.players.some((q) => q.alive && q.id !== p.id && Math.round(q.x) === cc && Math.round(q.y) === rr)) return true;
